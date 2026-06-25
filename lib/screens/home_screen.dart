@@ -1,3 +1,5 @@
+import 'package:admin_suscription_app/screens/category_screen.dart';
+import 'package:admin_suscription_app/screens/payment_method_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -92,16 +94,50 @@ class HomeScreen extends StatelessWidget {
               },
             ),
 
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: "add_sub",
+            child: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AddSubscriptionScreen(),
+                ),
+              );
+            },
+          ),
 
-        onPressed: () async {
-          await Navigator.push(
-            context,
+          const SizedBox(height: 10),
 
-            MaterialPageRoute(builder: (_) => const AddSubscriptionScreen()),
-          );
-        },
+          FloatingActionButton(
+            heroTag: "categories",
+            backgroundColor: Colors.orange,
+            child: const Icon(Icons.category),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CategoryScreen()),
+              );
+            },
+          ),
+
+          const SizedBox(height: 10),
+
+          FloatingActionButton(
+            heroTag: "payments",
+            backgroundColor: Colors.green,
+            child: const Icon(Icons.payment),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

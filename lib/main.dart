@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
 import 'package:provider/provider.dart';
+
+import 'screens/home_screen.dart';
+
 import 'providers/subscription_provider.dart';
+import 'providers/category_provider.dart';
+import 'providers/payment_method_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+
+        ChangeNotifierProvider(
+          create: (_) => CategoryProvider()..loadCategories(),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => PaymentMethodProvider()..loadMethods(),
+        ),
       ],
       child: const MyApp(),
     ),
