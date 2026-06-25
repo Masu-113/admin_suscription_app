@@ -2,43 +2,51 @@ import '../local/database_helper.dart';
 import '../../models/subscription.dart';
 
 class SubscriptionRepository {
-  final DatabaseHelper dbHelper = DatabaseHelper();
+  final dbHelper = DatabaseHelper();
 
-  Future<void> insertSubscription(Subscription subscription) async {
+  // INSERTAR SUSCRIPCION
+  Future<void> insertSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 
-    await db.insert("subscriptions", {
-      "id": subscription.id,
-
-      "serviceName": subscription.serviceName,
-
-      "price": subscription.price,
-
-      "renewalDate": subscription.renewalDate.toIso8601String(),
-
-      "status": subscription.status,
-    });
+    await db.insert('subscriptions', sub.toMap());
   }
 
+  // OBTENER TODAS LAS SUSCRIPCIONES
   Future<List<Subscription>> getSubscriptions() async {
     final db = await dbHelper.database;
 
-    final result = await db.query("subscriptions");
+    final result = await db.query('subscriptions');
 
-    return result
-        .map(
-          (e) => Subscription(
-            id: e["id"].toString(),
+    return result.map((map) {
+      return Subscription(
+        id: map['id'] as int?,
+        serviceName: (map['service_name'] ?? '') as String,
+        cost: (map['cost'] as num).toDouble(),
+        renewalDate: DateTime.parse(map['renewal_date'] as String),
+        status: (map['status'] ?? 'Active') as String,
+      );
+    }).toList();
+  }
 
-            serviceName: e["serviceName"].toString(),
+  // ELIMINAR SUSCRIPCION
+  Future<void> deleteSubscription(int id) async {
+    final db = await dbHelper.database;
 
-            price: double.parse(e["price"].toString()),
+    await db.delete('subscriptions', where: 'id = ?', whereArgs: [id]);
+  }
 
-            renewalDate: DateTime.parse(e["renewalDate"].toString()),
+  // ACTUALIZAR SUSCRIPCION
+  Future<void> updateSubscription(Subscription sub) async {
+    final db = await dbHelper.database;
 
-            status: e["status"].toString(),
-          ),
-        )
-        .toList();
+    await db.update(
+      'subscriptions',
+
+      sub.toMap(),
+
+      where: 'id = ?',
+
+      whereArgs: [sub.id],
+    );
   }
 }

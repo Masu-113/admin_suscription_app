@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/subscription_provider.dart';
 import 'add_subscription_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -6,21 +9,97 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<SubscriptionProvider>(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text("Mis Suscripciones")),
 
-      body: const Center(child: Text("No tienes suscripciones")),
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : provider.subscriptions.isEmpty
+          ? const Center(child: Text("No hay suscripciones"))
+          : ListView.builder(
+              itemCount: provider.subscriptions.length,
+
+              itemBuilder: (context, index) {
+                final sub = provider.subscriptions[index];
+
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+
+                  child: ListTile(
+                    title: Text(sub.serviceName),
+
+                    subtitle: Text(
+                      "Renewal: ${sub.renewalDate.toLocal().toString().split(' ')[0]}",
+                    ),
+
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+
+                          children: [
+                            Text("\$${sub.cost}"),
+
+                            Text(
+                              sub.status,
+
+                              style: TextStyle(
+                                color: sub.status == "Active"
+                                    ? Colors.green
+                                    : Colors.red,
+
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AddSubscriptionScreen(subscription: sub),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+
+                          onPressed: () {
+                            if (sub.id != null) {
+                              context
+                                  .read<SubscriptionProvider>()
+                                  .deleteSubscription(sub.id!);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
 
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
 
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
 
-            MaterialPageRoute(
-              builder: (context) => const AddSubscriptionScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const AddSubscriptionScreen()),
           );
         },
       ),

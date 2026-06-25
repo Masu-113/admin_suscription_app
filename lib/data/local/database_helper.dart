@@ -18,17 +18,12 @@ class DatabaseHelper {
         db.execute('''
 
 CREATE TABLE subscriptions(
-
-id TEXT PRIMARY KEY,
-
-serviceName TEXT,
-
-price REAL,
-
-renewalDate TEXT,
-
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+service_name TEXT,
+cost REAL,
+renewal_date TEXT,
 status TEXT
-
+);
 )
 
 ''');

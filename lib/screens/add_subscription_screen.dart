@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
+import 'package:provider/provider.dart';
 
 import '../models/subscription.dart';
-import '../data/repositories/subscription_repository.dart';
+import '../providers/subscription_provider.dart';
 
 class AddSubscriptionScreen extends StatefulWidget {
-  const AddSubscriptionScreen({super.key});
+  final Subscription? subscription;
+
+  const AddSubscriptionScreen({super.key, this.subscription});
 
   @override
   State<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
@@ -14,24 +16,43 @@ class AddSubscriptionScreen extends StatefulWidget {
 class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   final nameController = TextEditingController();
 
-  final priceController = TextEditingController();
+  final costController = TextEditingController();
 
-  final repo = SubscriptionRepository();
+  late bool isEditing;
+
+  @override
+  void initState() {
+    super.initState();
+
+    isEditing = widget.subscription != null;
+
+    if (isEditing) {
+      nameController.text = widget.subscription!.serviceName;
+
+      costController.text = widget.subscription!.cost.toString();
+    }
+  }
 
   void save() async {
     final subscription = Subscription(
-      id: const Uuid().v4(),
+      id: widget.subscription?.id,
 
       serviceName: nameController.text,
 
-      price: double.parse(priceController.text),
+      cost: double.parse(costController.text),
 
-      renewalDate: DateTime.now(),
+      renewalDate: widget.subscription?.renewalDate ?? DateTime.now(),
 
-      status: "Activa",
+      status: widget.subscription?.status ?? "Active",
     );
 
-    await repo.insertSubscription(subscription);
+    if (isEditing) {
+      await context.read<SubscriptionProvider>().updateSubscription(
+        subscription,
+      );
+    } else {
+      await context.read<SubscriptionProvider>().addSubscription(subscription);
+    }
 
     Navigator.pop(context);
   }
@@ -39,7 +60,9 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Nueva Suscripción")),
+      appBar: AppBar(
+        title: Text(isEditing ? "Edit Subscription" : "New Subscription"),
+      ),
 
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -49,20 +72,24 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
             TextField(
               controller: nameController,
 
-              decoration: const InputDecoration(labelText: "Servicio"),
+              decoration: const InputDecoration(labelText: "Service name"),
             ),
 
             TextField(
-              controller: priceController,
+              controller: costController,
 
               keyboardType: TextInputType.number,
 
-              decoration: const InputDecoration(labelText: "Costo"),
+              decoration: const InputDecoration(labelText: "Cost"),
             ),
 
             const SizedBox(height: 20),
 
-            ElevatedButton(onPressed: save, child: const Text("Guardar")),
+            ElevatedButton(
+              onPressed: save,
+
+              child: Text(isEditing ? "Update" : "Save"),
+            ),
           ],
         ),
       ),
