@@ -22,7 +22,6 @@ class HomeScreen extends StatelessWidget {
           ? const Center(child: Text("No hay suscripciones"))
           : ListView.builder(
               itemCount: provider.subscriptions.length,
-
               itemBuilder: (context, index) {
                 final sub = provider.subscriptions[index];
 
@@ -31,59 +30,66 @@ class HomeScreen extends StatelessWidget {
                     horizontal: 12,
                     vertical: 6,
                   ),
-
                   child: ListTile(
-                    title: Text(sub.serviceName),
+                    title: Text(sub.subscription.serviceName),
 
-                    subtitle: Text(
-                      "Renewal: ${sub.renewalDate.toLocal().toString().split(' ')[0]}",
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Renewal: ${sub.subscription.renewalDate.toLocal().toString().split(' ')[0]}",
+                        ),
+                        Text("Category: ${sub.categoryName}"),
+                        Text("Payment: ${sub.paymentMethodName}"),
+                      ],
                     ),
+
+                    isThreeLine: true,
+
+                    onTap: () {},
+                    leading: const Icon(Icons.subscriptions),
+                    contentPadding: const EdgeInsets.all(10),
 
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
-
                       children: [
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-
                           children: [
-                            Text("\$${sub.cost}"),
-
+                            Text("\$${sub.subscription.cost}"),
                             Text(
-                              sub.status,
-
+                              sub.subscription.status,
                               style: TextStyle(
-                                color: sub.status == "Active"
+                                color: sub.subscription.status == "Active"
                                     ? Colors.green
                                     : Colors.red,
-
                                 fontSize: 12,
                               ),
                             ),
                           ],
                         ),
+
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
-
                           onPressed: () async {
                             await Navigator.push(
                               context,
-
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    AddSubscriptionScreen(subscription: sub),
+                                builder: (_) => AddSubscriptionScreen(
+                                  subscription: sub.subscription,
+                                ),
                               ),
                             );
                           },
                         ),
+
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
-
                           onPressed: () {
-                            if (sub.id != null) {
+                            if (sub.subscription.id != null) {
                               context
                                   .read<SubscriptionProvider>()
-                                  .deleteSubscription(sub.id!);
+                                  .deleteSubscription(sub.subscription.id!);
                             }
                           },
                         ),
@@ -94,6 +100,7 @@ class HomeScreen extends StatelessWidget {
               },
             ),
 
+      // FAB MENU
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
