@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../data/repositories/category_repository.dart';
+import 'package:provider/provider.dart';
+
 import '../models/category.dart';
+import '../providers/category_provider.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -10,27 +12,25 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
-  final repo = CategoryRepository();
   final controller = TextEditingController();
 
-  List<Category> categories = [];
-
-  @override
-  void initState() {
-    super.initState();
-    load();
-  }
-
-  Future<void> load() async {
-    categories = await repo.getCategories();
-    setState(() {});
-  }
-
   Future<void> add() async {
-    await repo.insertCategory(Category(name: controller.text));
+    if (controller.text.trim().isEmpty) {
+      return;
+    }
+
+    await context.read<CategoryProvider>().addCategory(
+      Category(name: controller.text.trim()),
+    );
 
     controller.clear();
-    load();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -38,29 +38,36 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Categories")),
 
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: controller,
-              decoration: const InputDecoration(labelText: "New Category"),
-            ),
-          ),
+      body: Consumer<CategoryProvider>(
+        builder: (context, provider, _) {
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
 
-          ElevatedButton(onPressed: add, child: const Text("Add")),
+                child: TextField(
+                  controller: controller,
 
-          Expanded(
-            child: ListView.builder(
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final c = categories[index];
+                  decoration: const InputDecoration(labelText: "New Category"),
+                ),
+              ),
 
-                return ListTile(title: Text(c.name));
-              },
-            ),
-          ),
-        ],
+              ElevatedButton(onPressed: add, child: const Text("Add")),
+
+              Expanded(
+                child: ListView.builder(
+                  itemCount: provider.categories.length,
+
+                  itemBuilder: (context, index) {
+                    final c = provider.categories[index];
+
+                    return ListTile(title: Text(c.name));
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/subscription.dart';
 import '../models/subscription_full.dart';
 import '../data/repositories/subscription_repository.dart';
@@ -9,32 +10,40 @@ class SubscriptionProvider extends ChangeNotifier {
   List<SubscriptionFull> subscriptions = [];
 
   bool isLoading = false;
+
   // LOAD FULL DATA
   Future<void> loadSubscriptions() async {
-    isLoading = true;
-    notifyListeners();
+    try {
+      isLoading = true;
+      notifyListeners();
 
-    subscriptions = await _repo.getSubscriptionsFull();
-
-    isLoading = false;
-    notifyListeners();
+      subscriptions = await _repo.getSubscriptionsFull();
+    } catch (e) {
+      debugPrint("Error loading subscriptions: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   // ADD
   Future<void> addSubscription(Subscription sub) async {
     await _repo.insertSubscription(sub);
+
     await loadSubscriptions();
   }
 
   // DELETE
   Future<void> deleteSubscription(int id) async {
     await _repo.deleteSubscription(id);
+
     await loadSubscriptions();
   }
 
   // UPDATE
   Future<void> updateSubscription(Subscription sub) async {
     await _repo.updateSubscription(sub);
+
     await loadSubscriptions();
   }
 }

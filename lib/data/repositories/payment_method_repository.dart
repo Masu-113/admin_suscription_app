@@ -20,9 +20,33 @@ class PaymentMethodRepository {
     return result.map((map) {
       return PaymentMethod(
         id: map['id'] as int?,
+
         type: map['type'] as String,
+
         details: map['details'] as String?,
       );
     }).toList();
+  }
+
+  // 🟡 ACTUALIZAR
+  Future<void> updatePaymentMethod(PaymentMethod method) async {
+    final db = await dbHelper.database;
+
+    await db.update(
+      'payment_methods',
+
+      method.toMap(),
+
+      where: 'id = ?',
+
+      whereArgs: [method.id],
+    );
+  }
+
+  // 🔴 ELIMINAR
+  Future<void> deletePaymentMethod(int id) async {
+    final db = await dbHelper.database;
+
+    await db.delete('payment_methods', where: 'id = ?', whereArgs: [id]);
   }
 }

@@ -11,7 +11,9 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(
+          create: (_) => SubscriptionProvider()..loadSubscriptions(),
+        ),
 
         ChangeNotifierProvider(
           create: (_) => CategoryProvider()..loadCategories(),

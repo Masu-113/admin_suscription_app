@@ -2,23 +2,39 @@ import '../local/database_helper.dart';
 import '../../models/category.dart';
 
 class CategoryRepository {
-  final dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  // INSERTAR
+  Future<List<Category>> getCategories() async {
+    final db = await _dbHelper.database;
+
+    final result = await db.query('categories');
+
+    return result.map((e) => Category.fromMap(e)).toList();
+  }
+
   Future<void> insertCategory(Category category) async {
-    final db = await dbHelper.database;
+    final db = await _dbHelper.database;
 
     await db.insert('categories', category.toMap());
   }
 
-  // OBTENER TODAS
-  Future<List<Category>> getCategories() async {
-    final db = await dbHelper.database;
+  Future<void> updateCategory(Category category) async {
+    final db = await _dbHelper.database;
 
-    final result = await db.query('categories');
+    await db.update(
+      'categories',
 
-    return result.map((map) {
-      return Category(id: map['id'] as int?, name: map['name'] as String);
-    }).toList();
+      category.toMap(),
+
+      where: 'id = ?',
+
+      whereArgs: [category.id],
+    );
+  }
+
+  Future<void> deleteCategory(int id) async {
+    final db = await _dbHelper.database;
+
+    await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 }

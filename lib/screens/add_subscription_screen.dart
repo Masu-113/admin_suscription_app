@@ -17,11 +17,13 @@ class AddSubscriptionScreen extends StatefulWidget {
 
 class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   final nameController = TextEditingController();
+
   final costController = TextEditingController();
 
   late bool isEditing;
 
   int? selectedCategoryId;
+
   int? selectedPaymentId;
 
   @override
@@ -32,20 +34,57 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
     if (isEditing) {
       nameController.text = widget.subscription!.serviceName;
+
       costController.text = widget.subscription!.cost.toString();
 
       selectedCategoryId = widget.subscription!.categoryId;
+
       selectedPaymentId = widget.subscription!.paymentMethodId;
     }
   }
 
-  void save() async {
+  @override
+  void dispose() {
+    nameController.dispose();
+
+    costController.dispose();
+
+    super.dispose();
+  }
+
+  Future<void> save() async {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Enter a service name")));
+
+      return;
+    }
+
+    if (costController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Enter a cost")));
+
+      return;
+    }
+
+    final cost = double.tryParse(costController.text);
+
+    if (cost == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Invalid cost")));
+
+      return;
+    }
+
     final subscription = Subscription(
       id: widget.subscription?.id,
 
-      serviceName: nameController.text,
+      serviceName: nameController.text.trim(),
 
-      cost: double.parse(costController.text),
+      cost: cost,
 
       renewalDate: widget.subscription?.renewalDate ?? DateTime.now(),
 
@@ -56,15 +95,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       paymentMethodId: selectedPaymentId,
     );
 
+    final provider = context.read<SubscriptionProvider>();
+
     if (isEditing) {
-      await context.read<SubscriptionProvider>().updateSubscription(
-        subscription,
-      );
+      await provider.updateSubscription(subscription);
     } else {
-      await context.read<SubscriptionProvider>().addSubscription(subscription);
+      await provider.addSubscription(subscription);
     }
 
-    Navigator.pop(context);
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -74,7 +115,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
         title: Text(isEditing ? "Edit Subscription" : "New Subscription"),
       ),
 
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
 
         child: Column(
@@ -88,26 +129,38 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
             TextField(
               controller: costController,
 
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
 
               decoration: const InputDecoration(labelText: "Cost"),
             ),
 
             const SizedBox(height: 20),
 
-            // 🟢 CATEGORY DROPDOWN
             Consumer<CategoryProvider>(
               builder: (context, provider, _) {
+                final hasValue = provider.categories.any(
+                  (c) => c.id == selectedCategoryId,
+                );
+
                 return DropdownButtonFormField<int>(
-                  value: selectedCategoryId,
+                  initialValue: hasValue ? selectedCategoryId : null,
+
                   items: provider.categories.map((c) {
-                    return DropdownMenuItem(value: c.id, child: Text(c.name));
+                    return DropdownMenuItem<int>(
+                      value: c.id,
+
+                      child: Text(c.name),
+                    );
                   }).toList(),
+
                   onChanged: (value) {
                     setState(() {
                       selectedCategoryId = value;
                     });
                   },
+
                   decoration: const InputDecoration(labelText: "Category"),
                 );
               },
@@ -115,19 +168,29 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
             const SizedBox(height: 10),
 
-            // 🟢 PAYMENT METHOD DROPDOWN
             Consumer<PaymentMethodProvider>(
               builder: (context, provider, _) {
+                final hasValue = provider.methods.any(
+                  (m) => m.id == selectedPaymentId,
+                );
+
                 return DropdownButtonFormField<int>(
-                  value: selectedPaymentId,
+                  initialValue: hasValue ? selectedPaymentId : null,
+
                   items: provider.methods.map((m) {
-                    return DropdownMenuItem(value: m.id, child: Text(m.type));
+                    return DropdownMenuItem<int>(
+                      value: m.id,
+
+                      child: Text(m.type),
+                    );
                   }).toList(),
+
                   onChanged: (value) {
                     setState(() {
                       selectedPaymentId = value;
                     });
                   },
+
                   decoration: const InputDecoration(
                     labelText: "Payment Method",
                   ),
@@ -137,9 +200,14 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
             const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: save,
-              child: Text(isEditing ? "Update" : "Save"),
+            SizedBox(
+              width: double.infinity,
+
+              child: ElevatedButton(
+                onPressed: save,
+
+                child: Text(isEditing ? "Update" : "Save"),
+              ),
             ),
           ],
         ),
