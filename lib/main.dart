@@ -6,6 +6,7 @@ import 'screens/home_screen.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/category_provider.dart';
 import 'providers/payment_method_provider.dart';
+import 'providers/payment_history_provider.dart';
 
 void main() {
   runApp(
@@ -21,6 +22,9 @@ void main() {
 
         ChangeNotifierProvider(
           create: (_) => PaymentMethodProvider()..loadMethods(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PaymentHistoryProvider()..loadPayments(),
         ),
       ],
       child: const MyApp(),

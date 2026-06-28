@@ -42,6 +42,16 @@ class DatabaseHelper {
             details TEXT
           )
         ''');
+
+        // PAYMENT HISTORY
+        await db.execute('''
+          CREATE TABLE payment_history(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          payment_date TEXT NOT NULL,
+          amount REAL NOT NULL,
+          subscription_id INTEGER NOT NULL
+          )   
+        ''');
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -76,6 +86,15 @@ class DatabaseHelper {
             type TEXT NOT NULL,
             details TEXT
           )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE payment_history(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          payment_date TEXT NOT NULL,
+          amount REAL NOT NULL,
+          subscription_id INTEGER NOT NULL
+          )   
         ''');
       },
     );

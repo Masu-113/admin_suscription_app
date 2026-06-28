@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../providers/subscription_provider.dart';
 import 'add_subscription_screen.dart';
 
+import 'subscription_detail_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -46,7 +48,14 @@ class HomeScreen extends StatelessWidget {
 
                     isThreeLine: true,
 
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SubscriptionDetailScreen(data: sub),
+                        ),
+                      );
+                    },
                     leading: const Icon(Icons.subscriptions),
                     contentPadding: const EdgeInsets.all(10),
 
