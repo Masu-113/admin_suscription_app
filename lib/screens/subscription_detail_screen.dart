@@ -18,6 +18,19 @@ class SubscriptionDetailScreen extends StatefulWidget {
       _SubscriptionDetailScreenState();
 }
 
+String _paymentButtonText(SubscriptionStatus status) {
+  switch (status) {
+    case SubscriptionStatus.active:
+      return "Extender suscripción";
+
+    case SubscriptionStatus.aboutToExpire:
+      return "Renovar ahora";
+
+    case SubscriptionStatus.expired:
+      return "Reactivar suscripción";
+  }
+}
+
 class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
   @override
   void initState() {
@@ -117,7 +130,15 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
 
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se pudo registrar el pago.")),
+        const SnackBar(
+          content: Text(
+            "No se puede registrar el pago porque ya existe un pago registrado hoy.",
+          ),
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Pago registrado con éxito.")),
       );
     }
   }
@@ -229,7 +250,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.add),
 
-                    label: const Text("Registrar pago"),
+                    label: Text(_paymentButtonText(status)),
 
                     onPressed: () => _addPayment(payments),
                   ),
