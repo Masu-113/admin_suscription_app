@@ -111,7 +111,22 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       coveredUntil: coveredUntil,
     );
 
-    await context.read<PaymentHistoryProvider>().addPayment(payment);
+    // ignore: use_build_context_synchronously
+    final success = await context.read<PaymentHistoryProvider>().addPayment(
+      payment,
+    );
+
+    if (!success) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Este periodo ya está cubierto. No puedes duplicar el pago.",
+          ),
+        ),
+      );
+      return;
+    }
   }
 
   @override
