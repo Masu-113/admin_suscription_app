@@ -5,10 +5,12 @@ class PaymentHistoryRepository {
   final dbHelper = DatabaseHelper();
 
   // 🟢 INSERTAR PAGO
-  Future<void> insertPayment(PaymentHistory payment) async {
+  Future<int> insertPayment(PaymentHistory payment) async {
     final db = await dbHelper.database;
 
-    await db.insert('payment_history', payment.toMap());
+    final id = await db.insert('payment_history', payment.toMap());
+
+    return id;
   }
 
   // 🟢 OBTENER HISTORIAL COMPLETO
@@ -44,6 +46,21 @@ class PaymentHistoryRepository {
     return result.map((map) {
       return PaymentHistory.fromMap(map);
     }).toList();
+  }
+
+  // 🟠 ACTUALIZAR PAGO
+  Future<void> updatePayment(PaymentHistory payment) async {
+    final db = await dbHelper.database;
+
+    await db.update(
+      'payment_history',
+
+      payment.toMap(),
+
+      where: 'id = ?',
+
+      whereArgs: [payment.id],
+    );
   }
 
   // 🔴 ELIMINAR PAGO

@@ -10,10 +10,10 @@ class DatabaseHelper {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'subscriptions.db'),
 
-      version: 3, // 🔥 subimos versión por cambios
+      version: 4,
 
       onCreate: (db, version) async {
-        // 🟢 SUBSCRIPTIONS (ACTUALIZADA)
+        // 🟢 SUBSCRIPTIONS
         await db.execute('''
           CREATE TABLE subscriptions(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,22 +50,18 @@ class DatabaseHelper {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             payment_date TEXT NOT NULL,
             amount REAL NOT NULL,
-            subscription_id INTEGER NOT NULL
+            subscription_id INTEGER NOT NULL,
+            covered_until TEXT NOT NULL
           )
         ''');
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
-        // 🧠 MIGRACIÓN SEGURA (NO BORRA TODO)
-
-        if (oldVersion < 3) {
-          // 👉 agregar nuevos campos a subscriptions
+        // versión 3 → 4
+        if (oldVersion < 4) {
           await db.execute('''
-            ALTER TABLE subscriptions ADD COLUMN start_date TEXT
-          ''');
-
-          await db.execute('''
-            ALTER TABLE subscriptions ADD COLUMN billing_cycle TEXT
+            ALTER TABLE payment_history
+            ADD COLUMN covered_until TEXT
           ''');
         }
       },

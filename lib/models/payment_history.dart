@@ -7,6 +7,8 @@ class PaymentHistory {
 
   final int subscriptionId;
 
+  final DateTime coveredUntil;
+
   PaymentHistory({
     this.id,
 
@@ -15,6 +17,8 @@ class PaymentHistory {
     required this.amount,
 
     required this.subscriptionId,
+
+    required this.coveredUntil,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +30,8 @@ class PaymentHistory {
       'amount': amount,
 
       'subscription_id': subscriptionId,
+
+      'covered_until': coveredUntil.toIso8601String(),
     };
   }
 
@@ -38,6 +44,8 @@ class PaymentHistory {
       amount: (map['amount'] as num).toDouble(),
 
       subscriptionId: map['subscription_id'] as int,
+
+      coveredUntil: DateTime.parse(map['covered_until'] as String),
     );
   }
 }

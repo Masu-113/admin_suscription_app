@@ -19,6 +19,22 @@ class AddSubscriptionScreen extends StatefulWidget {
   State<AddSubscriptionScreen> createState() => _AddSubscriptionScreenState();
 }
 
+DateTime _calculateInitialCoverage(Subscription sub) {
+  if (sub.billingCycle == BillingCycle.monthly) {
+    return DateTime(
+      sub.startDate.year,
+      sub.startDate.month + 1,
+      sub.startDate.day,
+    );
+  } else {
+    return DateTime(
+      sub.startDate.year + 1,
+      sub.startDate.month,
+      sub.startDate.day,
+    );
+  }
+}
+
 class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   final nameController = TextEditingController();
   final costController = TextEditingController();
@@ -145,6 +161,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
       // Preguntar primer pago
       final registerPayment = await showDialog<bool>(
+        // ignore: use_build_context_synchronously
         context: context,
 
         builder: (_) {
@@ -177,6 +194,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       );
 
       if (registerPayment == true) {
+        // ignore: use_build_context_synchronously
         await context.read<PaymentHistoryProvider>().addPayment(
           PaymentHistory(
             paymentDate: subscription.startDate,
@@ -184,6 +202,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
             amount: subscription.cost,
 
             subscriptionId: id,
+
+            coveredUntil: _calculateInitialCoverage(subscription),
           ),
         );
       }
