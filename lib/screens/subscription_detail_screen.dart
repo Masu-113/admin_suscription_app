@@ -1,3 +1,4 @@
+import 'package:admin_suscription_app/models/billing_cycle.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,13 +26,30 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     });
   }
 
-  void _addPayment() async {
+  void _addPayment(List<PaymentHistory> payments) async {
+    final subscription = widget.data.subscription;
+
+    if (subscription.id == null) return;
+
+    // 🚫 Evitar doble pago en el mismo día
+    final alreadyPaidToday = payments.any(
+      (p) =>
+          p.paymentDate.year == DateTime.now().year &&
+          p.paymentDate.month == DateTime.now().month &&
+          p.paymentDate.day == DateTime.now().day,
+    );
+
+    if (alreadyPaidToday) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ya registraste un pago hoy")),
+      );
+      return;
+    }
+
     final payment = PaymentHistory(
       paymentDate: DateTime.now(),
-
-      amount: widget.data.subscription.cost,
-
-      subscriptionId: widget.data.subscription.id!,
+      amount: subscription.cost,
+      subscriptionId: subscription.id!,
     );
 
     await context.read<PaymentHistoryProvider>().addPayment(payment);
@@ -46,9 +64,24 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
 
       body: Consumer<PaymentHistoryProvider>(
         builder: (context, provider, _) {
-          final payments = provider.payments
-              .where((p) => p.subscriptionId == subscription.id)
-              .toList();
+          final payments =
+              provider.payments
+                  .where((p) => p.subscriptionId == subscription.id)
+                  .toList()
+                ..sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
+
+          // 💰 Total pagado
+          final totalPaid = payments.fold<double>(
+            0.0,
+            (sum, p) => sum + p.amount,
+          );
+
+          // 🕒 último pago
+          final lastPayment = payments.isNotEmpty ? payments.first : null;
+
+          String cycleText = subscription.billingCycle == BillingCycle.monthly
+              ? "mes"
+              : "año";
 
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -68,13 +101,32 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
 
                 const SizedBox(height: 8),
 
-                Text("\$${subscription.cost} / mes"),
+                Text("\$${subscription.cost} / $cycleText"),
 
                 const SizedBox(height: 4),
 
                 Text("Categoría: ${widget.data.categoryName}"),
-
                 Text("Método: ${widget.data.paymentMethodName}"),
+
+                const SizedBox(height: 12),
+
+                // 📊 RESUMEN
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Total pagado: \$${totalPaid.toStringAsFixed(2)}"),
+                      Text(
+                        "Último pago: ${lastPayment != null ? lastPayment.paymentDate.toString().substring(0, 10) : 'N/A'}",
+                      ),
+                    ],
+                  ),
+                ),
 
                 const Divider(height: 30),
 
@@ -91,7 +143,6 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                       ? const Center(child: Text("No hay pagos aún"))
                       : ListView.builder(
                           itemCount: payments.length,
-
                           itemBuilder: (context, index) {
                             final p = payments[index];
 
@@ -100,9 +151,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                                 Icons.check_circle,
                                 color: Colors.green,
                               ),
-
                               title: Text("\$${p.amount}"),
-
                               subtitle: Text(
                                 p.paymentDate.toString().substring(0, 10),
                               ),
@@ -118,10 +167,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.add),
-
                     label: const Text("Registrar pago"),
-
-                    onPressed: _addPayment,
+                    onPressed: () => _addPayment(payments),
                   ),
                 ),
               ],

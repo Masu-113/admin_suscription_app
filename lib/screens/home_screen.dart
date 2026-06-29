@@ -5,11 +5,14 @@ import 'package:provider/provider.dart';
 
 import '../providers/subscription_provider.dart';
 import 'add_subscription_screen.dart';
-
 import 'subscription_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  String formatDate(DateTime date) {
+    return date.toLocal().toString().split(' ')[0];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,20 +30,20 @@ class HomeScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final sub = provider.subscriptions[index];
 
+                final subscription = sub.subscription;
+
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 6,
                   ),
                   child: ListTile(
-                    title: Text(sub.subscription.serviceName),
+                    title: Text(subscription.serviceName),
 
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Renewal: ${sub.subscription.renewalDate.toLocal().toString().split(' ')[0]}",
-                        ),
+                        Text("Inicio: ${formatDate(subscription.startDate)}"),
                         Text("Category: ${sub.categoryName}"),
                         Text("Payment: ${sub.paymentMethodName}"),
                       ],
@@ -56,7 +59,9 @@ class HomeScreen extends StatelessWidget {
                         ),
                       );
                     },
+
                     leading: const Icon(Icons.subscriptions),
+
                     contentPadding: const EdgeInsets.all(10),
 
                     trailing: Row(
@@ -65,11 +70,11 @@ class HomeScreen extends StatelessWidget {
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("\$${sub.subscription.cost}"),
+                            Text("\$${subscription.cost}"),
                             Text(
-                              sub.subscription.status,
+                              subscription.status,
                               style: TextStyle(
-                                color: sub.subscription.status == "Active"
+                                color: subscription.status == "Active"
                                     ? Colors.green
                                     : Colors.red,
                                 fontSize: 12,
@@ -85,7 +90,7 @@ class HomeScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => AddSubscriptionScreen(
-                                  subscription: sub.subscription,
+                                  subscription: subscription,
                                 ),
                               ),
                             );
@@ -95,10 +100,10 @@ class HomeScreen extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () {
-                            if (sub.subscription.id != null) {
+                            if (subscription.id != null) {
                               context
                                   .read<SubscriptionProvider>()
-                                  .deleteSubscription(sub.subscription.id!);
+                                  .deleteSubscription(subscription.id!);
                             }
                           },
                         ),

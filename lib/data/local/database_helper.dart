@@ -10,23 +10,24 @@ class DatabaseHelper {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'subscriptions.db'),
 
-      version: 2,
+      version: 3, // 🔥 subimos versión por cambios
 
       onCreate: (db, version) async {
-        // SUBSCRIPTIONS (ACTUALIZADA)
+        // 🟢 SUBSCRIPTIONS (ACTUALIZADA)
         await db.execute('''
           CREATE TABLE subscriptions(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            service_name TEXT,
-            cost REAL,
-            renewal_date TEXT,
-            status TEXT,
+            service_name TEXT NOT NULL,
+            cost REAL NOT NULL,
+            start_date TEXT NOT NULL,
+            billing_cycle TEXT NOT NULL,
+            status TEXT NOT NULL,
             category_id INTEGER,
             payment_method_id INTEGER
           )
         ''');
 
-        // CATEGORIES
+        // 🟢 CATEGORIES
         await db.execute('''
           CREATE TABLE categories(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +35,7 @@ class DatabaseHelper {
           )
         ''');
 
-        // PAYMENT METHODS
+        // 🟢 PAYMENT METHODS
         await db.execute('''
           CREATE TABLE payment_methods(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,59 +44,30 @@ class DatabaseHelper {
           )
         ''');
 
-        // PAYMENT HISTORY
+        // 🟢 PAYMENT HISTORY
         await db.execute('''
           CREATE TABLE payment_history(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          payment_date TEXT NOT NULL,
-          amount REAL NOT NULL,
-          subscription_id INTEGER NOT NULL
-          )   
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            payment_date TEXT NOT NULL,
+            amount REAL NOT NULL,
+            subscription_id INTEGER NOT NULL
+          )
         ''');
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
-        await db.execute("DROP TABLE IF EXISTS subscriptions");
-        await db.execute("DROP TABLE IF EXISTS categories");
-        await db.execute("DROP TABLE IF EXISTS payment_methods");
+        // 🧠 MIGRACIÓN SEGURA (NO BORRA TODO)
 
-        // RECREAR TODO
+        if (oldVersion < 3) {
+          // 👉 agregar nuevos campos a subscriptions
+          await db.execute('''
+            ALTER TABLE subscriptions ADD COLUMN start_date TEXT
+          ''');
 
-        await db.execute('''
-          CREATE TABLE subscriptions(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            service_name TEXT,
-            cost REAL,
-            renewal_date TEXT,
-            status TEXT,
-            category_id INTEGER,
-            payment_method_id INTEGER
-          )
-        ''');
-
-        await db.execute('''
-          CREATE TABLE categories(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-          )
-        ''');
-
-        await db.execute('''
-          CREATE TABLE payment_methods(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT NOT NULL,
-            details TEXT
-          )
-        ''');
-
-        await db.execute('''
-          CREATE TABLE payment_history(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          payment_date TEXT NOT NULL,
-          amount REAL NOT NULL,
-          subscription_id INTEGER NOT NULL
-          )   
-        ''');
+          await db.execute('''
+            ALTER TABLE subscriptions ADD COLUMN billing_cycle TEXT
+          ''');
+        }
       },
     );
 

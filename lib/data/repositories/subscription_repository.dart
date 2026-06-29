@@ -1,3 +1,4 @@
+import 'package:admin_suscription_app/models/billing_cycle.dart';
 import 'package:admin_suscription_app/models/subscription_full.dart';
 import '../local/database_helper.dart';
 import '../../models/subscription.dart';
@@ -5,14 +6,13 @@ import '../../models/subscription.dart';
 class SubscriptionRepository {
   final dbHelper = DatabaseHelper();
 
-  // INSERTAR SUSCRIPCIÓN
+  // 🟢 INSERTAR SUSCRIPCIÓN
   Future<void> insertSubscription(Subscription sub) async {
     final db = await dbHelper.database;
-
     await db.insert('subscriptions', sub.toMap());
   }
 
-  // OBTENER SUSCRIPCIONES BÁSICAS
+  // 🟢 OBTENER BÁSICAS
   Future<List<Subscription>> getSubscriptions() async {
     final db = await dbHelper.database;
 
@@ -23,7 +23,14 @@ class SubscriptionRepository {
         id: map['id'] as int?,
         serviceName: (map['service_name'] ?? '') as String,
         cost: (map['cost'] as num).toDouble(),
-        renewalDate: DateTime.parse(map['renewal_date'] as String),
+
+        startDate: DateTime.parse(map['start_date'] as String),
+
+        billingCycle: BillingCycle.values.firstWhere(
+          (e) => e.name == map['billing_cycle'],
+          orElse: () => BillingCycle.monthly,
+        ),
+
         status: (map['status'] ?? 'Active') as String,
         categoryId: map['category_id'] as int?,
         paymentMethodId: map['payment_method_id'] as int?,
@@ -31,7 +38,7 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // OBTENER SUSCRIPCIONES CON NOMBRES (JOIN MANUAL)
+  // 🟢 FULL (JOIN MANUAL)
   Future<List<SubscriptionFull>> getSubscriptionsFull() async {
     final db = await dbHelper.database;
 
@@ -42,27 +49,36 @@ class SubscriptionRepository {
     return subs.map((s) {
       final sub = Subscription(
         id: s['id'] as int?,
-        serviceName: s['service_name'] as String,
+        serviceName: (s['service_name'] ?? '') as String,
         cost: (s['cost'] as num).toDouble(),
-        renewalDate: DateTime.parse(s['renewal_date'] as String),
-        status: s['status'] as String,
+
+        startDate: DateTime.parse(s['start_date'] as String),
+
+        billingCycle: BillingCycle.values.firstWhere(
+          (e) => e.name == s['billing_cycle'],
+          orElse: () => BillingCycle.monthly,
+        ),
+
+        status: (s['status'] ?? 'Active') as String,
         categoryId: s['category_id'] as int?,
         paymentMethodId: s['payment_method_id'] as int?,
       );
-      // CATEGORY NAME (SAFE CAST)
+
+      // 🟢 CATEGORY NAME SAFE
       final categoryName =
-          (categories.firstWhere(
+          categories.firstWhere(
                 (c) => c['id'] == sub.categoryId,
                 orElse: () => {'name': 'Unknown'},
               )['name']
-              as String);
-      // PAYMENT NAME (SAFE CAST)
+              as String;
+
+      // 🟢 PAYMENT NAME SAFE
       final paymentName =
-          (payments.firstWhere(
+          payments.firstWhere(
                 (p) => p['id'] == sub.paymentMethodId,
                 orElse: () => {'type': 'Unknown'},
               )['type']
-              as String);
+              as String;
 
       return SubscriptionFull(
         subscription: sub,
@@ -72,14 +88,14 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // ELIMINAR SUSCRIPCIÓN
+  // 🟢 DELETE
   Future<void> deleteSubscription(int id) async {
     final db = await dbHelper.database;
 
     await db.delete('subscriptions', where: 'id = ?', whereArgs: [id]);
   }
 
-  // ACTUALIZAR SUSCRIPCIÓN
+  // 🟢 UPDATE
   Future<void> updateSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 

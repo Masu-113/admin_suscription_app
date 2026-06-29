@@ -1,3 +1,5 @@
+import 'billing_cycle.dart';
+
 class Subscription {
   int? id;
 
@@ -5,7 +7,9 @@ class Subscription {
 
   double cost;
 
-  DateTime renewalDate;
+  DateTime startDate;
+
+  BillingCycle billingCycle;
 
   String status;
 
@@ -15,34 +19,24 @@ class Subscription {
 
   Subscription({
     this.id,
-
     required this.serviceName,
-
     required this.cost,
-
-    required this.renewalDate,
-
+    required this.startDate,
+    required this.billingCycle,
     required this.status,
-
     this.categoryId,
-
     this.paymentMethodId,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-
       'service_name': serviceName,
-
       'cost': cost,
-
-      'renewal_date': renewalDate.toIso8601String(),
-
+      'start_date': startDate.toIso8601String(),
+      'billing_cycle': billingCycle.name,
       'status': status,
-
       'category_id': categoryId,
-
       'payment_method_id': paymentMethodId,
     };
   }
@@ -50,17 +44,15 @@ class Subscription {
   factory Subscription.fromMap(Map<String, dynamic> map) {
     return Subscription(
       id: map['id'],
-
       serviceName: map['service_name'],
-
       cost: map['cost'],
-
-      renewalDate: DateTime.parse(map['renewal_date']),
-
+      startDate: DateTime.parse(map['start_date']),
+      billingCycle: BillingCycle.values.firstWhere(
+        (e) => e.name == map['billing_cycle'],
+        orElse: () => BillingCycle.monthly,
+      ),
       status: map['status'],
-
       categoryId: map['category_id'],
-
       paymentMethodId: map['payment_method_id'],
     );
   }

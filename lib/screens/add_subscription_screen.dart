@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/subscription.dart';
+import '../models/billing_cycle.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/payment_method_provider.dart';
@@ -17,14 +18,16 @@ class AddSubscriptionScreen extends StatefulWidget {
 
 class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
   final nameController = TextEditingController();
-
   final costController = TextEditingController();
 
   late bool isEditing;
 
   int? selectedCategoryId;
-
   int? selectedPaymentId;
+
+  DateTime? selectedStartDate;
+
+  BillingCycle selectedCycle = BillingCycle.monthly;
 
   @override
   void initState() {
@@ -33,39 +36,50 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
     isEditing = widget.subscription != null;
 
     if (isEditing) {
-      nameController.text = widget.subscription!.serviceName;
+      final sub = widget.subscription!;
 
-      costController.text = widget.subscription!.cost.toString();
+      nameController.text = sub.serviceName;
+      costController.text = sub.cost.toString();
 
-      selectedCategoryId = widget.subscription!.categoryId;
+      selectedCategoryId = sub.categoryId;
+      selectedPaymentId = sub.paymentMethodId;
 
-      selectedPaymentId = widget.subscription!.paymentMethodId;
+      selectedStartDate = sub.startDate;
+      selectedCycle = sub.billingCycle;
+    } else {
+      selectedStartDate = DateTime.now();
     }
   }
 
   @override
   void dispose() {
     nameController.dispose();
-
     costController.dispose();
-
     super.dispose();
   }
 
-  Future<void> save() async {
-    if (nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Enter a service name")));
+  Future<void> _pickDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedStartDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
 
-      return;
+    if (date != null) {
+      setState(() {
+        selectedStartDate = date;
+      });
     }
+  }
 
-    if (costController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Enter a cost")));
-
+  Future<void> save() async {
+    if (nameController.text.trim().isEmpty ||
+        costController.text.trim().isEmpty ||
+        selectedStartDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Completa todos los campos")),
+      );
       return;
     }
 
@@ -75,23 +89,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Invalid cost")));
-
       return;
     }
 
     final subscription = Subscription(
       id: widget.subscription?.id,
-
       serviceName: nameController.text.trim(),
-
       cost: cost,
-
-      renewalDate: widget.subscription?.renewalDate ?? DateTime.now(),
-
+      startDate: selectedStartDate!,
+      billingCycle: selectedCycle,
       status: widget.subscription?.status ?? "Active",
-
       categoryId: selectedCategoryId,
-
       paymentMethodId: selectedPaymentId,
     );
 
@@ -103,9 +111,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       await provider.addSubscription(subscription);
     }
 
-    if (mounted) {
-      Navigator.pop(context);
-    }
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -122,45 +128,64 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
           children: [
             TextField(
               controller: nameController,
-
               decoration: const InputDecoration(labelText: "Service name"),
             ),
 
             TextField(
               controller: costController,
-
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-
               decoration: const InputDecoration(labelText: "Cost"),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 15),
+
+            // 📅 START DATE
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Start date: ${selectedStartDate?.toLocal().toString().split(' ')[0] ?? ''}",
+                  ),
+                ),
+                TextButton(onPressed: _pickDate, child: const Text("Select")),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // 🔁 BILLING CYCLE
+            DropdownButtonFormField<BillingCycle>(
+              initialValue: selectedCycle,
+              items: BillingCycle.values.map((c) {
+                return DropdownMenuItem(
+                  value: c,
+                  child: Text(c == BillingCycle.monthly ? "Monthly" : "Yearly"),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedCycle = value;
+                  });
+                }
+              },
+              decoration: const InputDecoration(labelText: "Billing cycle"),
+            ),
+
+            const SizedBox(height: 15),
 
             Consumer<CategoryProvider>(
               builder: (context, provider, _) {
-                final hasValue = provider.categories.any(
-                  (c) => c.id == selectedCategoryId,
-                );
-
                 return DropdownButtonFormField<int>(
-                  initialValue: hasValue ? selectedCategoryId : null,
-
+                  initialValue: selectedCategoryId,
                   items: provider.categories.map((c) {
-                    return DropdownMenuItem<int>(
-                      value: c.id,
-
-                      child: Text(c.name),
-                    );
+                    return DropdownMenuItem(value: c.id, child: Text(c.name));
                   }).toList(),
-
                   onChanged: (value) {
-                    setState(() {
-                      selectedCategoryId = value;
-                    });
+                    setState(() => selectedCategoryId = value);
                   },
-
                   decoration: const InputDecoration(labelText: "Category"),
                 );
               },
@@ -170,27 +195,14 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
             Consumer<PaymentMethodProvider>(
               builder: (context, provider, _) {
-                final hasValue = provider.methods.any(
-                  (m) => m.id == selectedPaymentId,
-                );
-
                 return DropdownButtonFormField<int>(
-                  initialValue: hasValue ? selectedPaymentId : null,
-
+                  value: selectedPaymentId,
                   items: provider.methods.map((m) {
-                    return DropdownMenuItem<int>(
-                      value: m.id,
-
-                      child: Text(m.type),
-                    );
+                    return DropdownMenuItem(value: m.id, child: Text(m.type));
                   }).toList(),
-
                   onChanged: (value) {
-                    setState(() {
-                      selectedPaymentId = value;
-                    });
+                    setState(() => selectedPaymentId = value);
                   },
-
                   decoration: const InputDecoration(
                     labelText: "Payment Method",
                   ),
@@ -202,10 +214,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
             SizedBox(
               width: double.infinity,
-
               child: ElevatedButton(
                 onPressed: save,
-
                 child: Text(isEditing ? "Update" : "Save"),
               ),
             ),
