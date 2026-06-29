@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/payment_history_provider.dart';
 
-import '../models/payment_history.dart';
+// import '../models/payment_history.dart';
 import '../core/subscription_status.dart';
 
 import 'add_subscription_screen.dart';
@@ -31,21 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String formatDate(DateTime date) {
     return date.toLocal().toString().split(' ')[0];
-  }
-
-  DateTime getLastCoveredUntil(
-    List<PaymentHistory> payments,
-    DateTime startDate,
-  ) {
-    if (payments.isEmpty) {
-      return startDate;
-    }
-
-    final last = payments.reduce(
-      (a, b) => a.coveredUntil.isAfter(b.coveredUntil) ? a : b,
-    );
-
-    return last.coveredUntil;
   }
 
   @override
@@ -73,14 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
               final subscription = sub.subscription;
 
-              final payments = paymentProvider.payments
-                  .where((p) => p.subscriptionId == subscription.id)
-                  .toList();
-
-              final lastCovered = getLastCoveredUntil(
-                payments,
-                subscription.startDate,
+              final lastPayment = paymentProvider.getLastPaymentForSubscription(
+                subscription.id!,
               );
+
+              final lastCovered =
+                  lastPayment?.coveredUntil ?? subscription.startDate;
 
               final status = SubscriptionStatusHelper.getStatus(lastCovered);
 
@@ -98,6 +81,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       Text(
                         "Estado: ${SubscriptionStatusHelper.getText(status)}",
+                        style: TextStyle(
+                          color: SubscriptionStatusHelper.getColor(status),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
 
                       Text("Activo hasta: ${formatDate(lastCovered)}"),

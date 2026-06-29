@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum SubscriptionStatus { active, aboutToExpire, expired }
 
 class SubscriptionStatusHelper {
@@ -27,6 +29,19 @@ class SubscriptionStatusHelper {
 
       case SubscriptionStatus.expired:
         return "Vencida";
+    }
+  }
+
+  static Color getColor(SubscriptionStatus status) {
+    switch (status) {
+      case SubscriptionStatus.active:
+        return Colors.green;
+
+      case SubscriptionStatus.aboutToExpire:
+        return Colors.orange;
+
+      case SubscriptionStatus.expired:
+        return Colors.red;
     }
   }
 }

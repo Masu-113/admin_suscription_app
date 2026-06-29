@@ -57,6 +57,23 @@ class PaymentHistoryProvider extends ChangeNotifier {
     );
   }
 
+  // OBTENER ÚLTIMO PAGO DE UNA SUSCRIPCIÓN
+  PaymentHistory? getLastPaymentForSubscription(int subscriptionId) {
+    final paymentsForSubscription = payments
+        .where((p) => p.subscriptionId == subscriptionId)
+        .toList();
+
+    if (paymentsForSubscription.isEmpty) {
+      return null;
+    }
+
+    paymentsForSubscription.sort(
+      (a, b) => b.coveredUntil.compareTo(a.coveredUntil),
+    );
+
+    return paymentsForSubscription.first;
+  }
+
   // UPDATE
   Future<void> updatePayment(PaymentHistory payment) async {
     await _repo.updatePayment(payment);
