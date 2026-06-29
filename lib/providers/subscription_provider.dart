@@ -27,10 +27,12 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   // ADD
-  Future<void> addSubscription(Subscription sub) async {
-    await _repo.insertSubscription(sub);
+  Future<int> addSubscription(Subscription sub) async {
+    final id = await _repo.insertSubscription(sub);
 
     await loadSubscriptions();
+
+    return id;
   }
 
   // DELETE

@@ -7,9 +7,12 @@ class SubscriptionRepository {
   final dbHelper = DatabaseHelper();
 
   // 🟢 INSERTAR SUSCRIPCIÓN
-  Future<void> insertSubscription(Subscription sub) async {
+  Future<int> insertSubscription(Subscription sub) async {
     final db = await dbHelper.database;
-    await db.insert('subscriptions', sub.toMap());
+
+    final id = await db.insert('subscriptions', sub.toMap());
+
+    return id;
   }
 
   // 🟢 OBTENER BÁSICAS

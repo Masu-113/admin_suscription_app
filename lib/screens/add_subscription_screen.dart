@@ -7,6 +7,9 @@ import '../providers/subscription_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/payment_method_provider.dart';
 
+import '../models/payment_history.dart';
+import '../providers/payment_history_provider.dart';
+
 class AddSubscriptionScreen extends StatefulWidget {
   final Subscription? subscription;
 
@@ -83,35 +86,112 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       return;
     }
 
+    // 🚫 No permitir fechas futuras
+    final today = DateTime.now();
+
+    final startDateOnly = DateTime(
+      selectedStartDate!.year,
+      selectedStartDate!.month,
+      selectedStartDate!.day,
+    );
+
+    final todayOnly = DateTime(today.year, today.month, today.day);
+
+    if (startDateOnly.isAfter(todayOnly)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("La fecha de inicio no puede ser futura")),
+      );
+
+      return;
+    }
+
     final cost = double.tryParse(costController.text);
 
     if (cost == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Invalid cost")));
+
       return;
     }
 
     final subscription = Subscription(
       id: widget.subscription?.id,
+
       serviceName: nameController.text.trim(),
+
       cost: cost,
+
       startDate: selectedStartDate!,
+
       billingCycle: selectedCycle,
+
       status: widget.subscription?.status ?? "Active",
+
       categoryId: selectedCategoryId,
+
       paymentMethodId: selectedPaymentId,
     );
 
-    final provider = context.read<SubscriptionProvider>();
+    final subscriptionProvider = context.read<SubscriptionProvider>();
 
+    // ✏️ EDITAR
     if (isEditing) {
-      await provider.updateSubscription(subscription);
-    } else {
-      await provider.addSubscription(subscription);
+      await subscriptionProvider.updateSubscription(subscription);
+    }
+    // ➕ CREAR
+    else {
+      final id = await subscriptionProvider.addSubscription(subscription);
+
+      // Preguntar primer pago
+      final registerPayment = await showDialog<bool>(
+        context: context,
+
+        builder: (_) {
+          return AlertDialog(
+            title: const Text("Registrar primer pago"),
+
+            content: Text(
+              "¿Deseas registrar el primer pago de ${subscription.serviceName} por \$${subscription.cost}?",
+            ),
+
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context, false);
+                },
+
+                child: const Text("No"),
+              ),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
+
+                child: const Text("Sí"),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (registerPayment == true) {
+        await context.read<PaymentHistoryProvider>().addPayment(
+          PaymentHistory(
+            paymentDate: subscription.startDate,
+
+            amount: subscription.cost,
+
+            subscriptionId: id,
+          ),
+        );
+      }
     }
 
-    if (mounted) Navigator.pop(context);
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -196,7 +276,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
             Consumer<PaymentMethodProvider>(
               builder: (context, provider, _) {
                 return DropdownButtonFormField<int>(
-                  value: selectedPaymentId,
+                  initialValue: selectedPaymentId,
                   items: provider.methods.map((m) {
                     return DropdownMenuItem(value: m.id, child: Text(m.type));
                   }).toList(),
