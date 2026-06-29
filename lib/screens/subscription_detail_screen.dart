@@ -6,6 +6,8 @@ import '../models/subscription_full.dart';
 import '../models/payment_history.dart';
 import '../providers/payment_history_provider.dart';
 
+import '../core/subscription_status.dart';
+
 class SubscriptionDetailScreen extends StatefulWidget {
   final SubscriptionFull data;
 
@@ -26,25 +28,29 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     });
   }
 
-  DateTime _calculateCoveredUntil(List<PaymentHistory> payments) {
+  DateTime _getLastCoveredUntil(List<PaymentHistory> payments) {
     final subscription = widget.data.subscription;
 
-    DateTime baseDate;
-
     if (payments.isEmpty) {
-      baseDate = subscription.startDate;
-    } else {
-      final sortedPayments = List<PaymentHistory>.from(payments);
-
-      sortedPayments.sort((a, b) => b.coveredUntil.compareTo(a.coveredUntil));
-
-      baseDate = sortedPayments.first.coveredUntil;
+      return subscription.startDate;
     }
 
+    final last = payments.reduce(
+      (a, b) => a.coveredUntil.isAfter(b.coveredUntil) ? a : b,
+    );
+
+    return last.coveredUntil;
+  }
+
+  DateTime _calculateNextCoveredUntil(List<PaymentHistory> payments) {
+    final subscription = widget.data.subscription;
+
+    final base = _getLastCoveredUntil(payments);
+
     if (subscription.billingCycle == BillingCycle.monthly) {
-      return DateTime(baseDate.year, baseDate.month + 1, baseDate.day);
+      return DateTime(base.year, base.month + 1, base.day);
     } else {
-      return DateTime(baseDate.year + 1, baseDate.month, baseDate.day);
+      return DateTime(base.year + 1, base.month, base.day);
     }
   }
 
@@ -55,13 +61,13 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       return;
     }
 
-    final today = DateTime.now();
+    final now = DateTime.now();
 
-    final hasActivePayment = payments.any((p) {
-      return today.isBefore(p.coveredUntil.add(const Duration(days: 1)));
-    });
+    final lastCovered = _getLastCoveredUntil(payments);
 
-    if (hasActivePayment) {
+    final status = SubscriptionStatusHelper.getStatus(lastCovered);
+
+    if (status != SubscriptionStatus.expired) {
       final confirm = await showDialog<bool>(
         context: context,
 
@@ -70,22 +76,18 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
             title: const Text("Pago adelantado"),
 
             content: const Text(
-              "Esta suscripción ya tiene un periodo cubierto.\n\n¿Deseas registrar un pago adelantado?",
+              "Esta suscripción todavía está cubierta.\n\n¿Deseas extender el periodo?",
             ),
 
             actions: [
               TextButton(
-                onPressed: () {
-                  Navigator.pop(context, false);
-                },
+                onPressed: () => Navigator.pop(context, false),
 
                 child: const Text("Cancelar"),
               ),
 
               TextButton(
-                onPressed: () {
-                  Navigator.pop(context, true);
-                },
+                onPressed: () => Navigator.pop(context, true),
 
                 child: const Text("Continuar"),
               ),
@@ -99,33 +101,24 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       }
     }
 
-    final coveredUntil = _calculateCoveredUntil(payments);
-
     final payment = PaymentHistory(
-      paymentDate: DateTime.now(),
+      paymentDate: now,
 
       amount: subscription.cost,
 
       subscriptionId: subscription.id!,
 
-      coveredUntil: coveredUntil,
+      coveredUntil: _calculateNextCoveredUntil(payments),
     );
 
-    // ignore: use_build_context_synchronously
     final success = await context.read<PaymentHistoryProvider>().addPayment(
       payment,
     );
 
-    if (!success) {
-      // ignore: use_build_context_synchronously
+    if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Este periodo ya está cubierto. No puedes duplicar el pago.",
-          ),
-        ),
+        const SnackBar(content: Text("No se pudo registrar el pago.")),
       );
-      return;
     }
   }
 
@@ -149,7 +142,9 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
             (sum, p) => sum + p.amount,
           );
 
-          final lastPayment = payments.isNotEmpty ? payments.first : null;
+          final lastCovered = _getLastCoveredUntil(payments);
+
+          final status = SubscriptionStatusHelper.getStatus(lastCovered);
 
           final cycleText = subscription.billingCycle == BillingCycle.monthly
               ? "mes"
@@ -176,22 +171,19 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
 
                 Text("\$${subscription.cost} / $cycleText"),
 
-                Text("Categoría: ${widget.data.categoryName}"),
-
-                Text("Método: ${widget.data.paymentMethodName}"),
-
-                const SizedBox(height: 12),
+                Text("Estado: ${SubscriptionStatusHelper.getText(status)}"),
 
                 Text("Total pagado: \$${totalPaid.toStringAsFixed(2)}"),
 
                 Text(
-                  "Último pago: ${lastPayment != null ? lastPayment.paymentDate.toString().substring(0, 10) : "N/A"}",
+                  "Activo hasta: ${lastCovered.toString().substring(0, 10)}",
                 ),
 
                 const Divider(height: 30),
 
                 const Text(
                   "Historial de pagos",
+
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
 
@@ -207,6 +199,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                             return ListTile(
                               leading: const Icon(
                                 Icons.check_circle,
+
                                 color: Colors.green,
                               ),
 
