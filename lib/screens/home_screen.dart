@@ -10,6 +10,7 @@ import '../core/subscription_status.dart';
 
 import 'add_subscription_screen.dart';
 import 'subscription_detail_screen.dart';
+import 'cancelled_subscription_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -259,6 +260,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 context,
 
                 MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
+              );
+            },
+          ),
+          FloatingActionButton(
+            heroTag: "cancelled",
+
+            backgroundColor: Colors.red,
+
+            child: const Icon(Icons.history),
+
+            onPressed: () {
+              Navigator.push(
+                context,
+
+                MaterialPageRoute(
+                  builder: (_) => const CancelledSubscriptionScreen(),
+                ),
               );
             },
           ),
