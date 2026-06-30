@@ -74,6 +74,19 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       return;
     }
 
+    // 🚫 BLOQUEAR PAGOS EN CANCELADAS
+    if (subscription.isCancelled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Esta suscripción está cancelada. No se pueden registrar nuevos pagos.",
+          ),
+        ),
+      );
+
+      return;
+    }
+
     final now = DateTime.now();
 
     final lastCovered = _getLastCoveredUntil(payments);
@@ -89,7 +102,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
             title: const Text("Pago adelantado"),
 
             content: const Text(
-              "Esta suscripción todavía está cubierta.\n\n¿Deseas extender el periodo?",
+              "Esta suscripción todavía está cubierta.\n\n"
+              "¿Deseas extender el periodo?",
             ),
 
             actions: [
@@ -128,7 +142,11 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       payment,
     );
 
-    if (!success && mounted) {
+    if (!mounted) {
+      return;
+    }
+
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -136,7 +154,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
           ),
         ),
       );
-    } else if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Pago registrado con éxito.")),
       );
@@ -244,17 +262,18 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                         ),
                 ),
 
-                SizedBox(
-                  width: double.infinity,
+                if (!subscription.isCancelled)
+                  SizedBox(
+                    width: double.infinity,
 
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
 
-                    label: Text(_paymentButtonText(status)),
+                      label: Text(_paymentButtonText(status)),
 
-                    onPressed: () => _addPayment(payments),
+                      onPressed: () => _addPayment(payments),
+                    ),
                   ),
-                ),
               ],
             ),
           );
