@@ -84,9 +84,11 @@ class CancelledSubscriptionScreen extends StatelessWidget {
 
               final subscription = sub.subscription;
 
-              final lastPayment = paymentProvider.getLastPaymentForSubscription(
-                subscription.id!,
-              );
+              final lastPayment = subscription.id != null
+                  ? paymentProvider.getLastPaymentForSubscription(
+                      subscription.id!,
+                    )
+                  : null;
 
               final lastCovered =
                   lastPayment?.coveredUntil ?? subscription.startDate;
@@ -117,6 +119,10 @@ class CancelledSubscriptionScreen extends StatelessWidget {
                     tooltip: "Reactivar",
 
                     onPressed: () {
+                      if (subscription.id == null) {
+                        return;
+                      }
+
                       _restoreSubscription(
                         context,
 

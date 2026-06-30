@@ -9,7 +9,6 @@ import '../providers/payment_history_provider.dart';
 import '../core/subscription_status.dart';
 
 import '../providers/subscription_history_provider.dart';
-import '../models/subscription_history.dart';
 
 class SubscriptionDetailScreen extends StatefulWidget {
   final SubscriptionFull data;
