@@ -12,6 +12,7 @@ class SubscriptionProvider extends ChangeNotifier {
   bool isLoading = false;
 
   // LOAD FULL DATA
+
   Future<void> loadSubscriptions() async {
     try {
       isLoading = true;
@@ -29,6 +30,7 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   // ADD
+
   Future<int> addSubscription(Subscription sub) async {
     final id = await _repo.insertSubscription(sub);
 
@@ -37,14 +39,16 @@ class SubscriptionProvider extends ChangeNotifier {
     return id;
   }
 
-  // CANCELAR SUSCRIPCIÓN
+  // CANCELAR
+
   Future<void> cancelSubscription(int id) async {
     await _repo.cancelSubscription(id);
 
     await loadSubscriptions();
   }
 
-  // REACTIVAR SUSCRIPCIÓN
+  // REACTIVAR
+
   Future<void> restoreSubscription(int id) async {
     await _repo.restoreSubscription(id);
 
@@ -52,6 +56,7 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   // UPDATE
+
   Future<void> updateSubscription(Subscription sub) async {
     await _repo.updateSubscription(sub);
 

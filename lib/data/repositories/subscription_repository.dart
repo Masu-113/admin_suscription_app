@@ -4,19 +4,37 @@ import 'package:admin_suscription_app/models/subscription_full.dart';
 import '../local/database_helper.dart';
 import '../../models/subscription.dart';
 
+import 'subscription_history_repository.dart';
+import '../../models/subscription_history.dart';
+
 class SubscriptionRepository {
   final dbHelper = DatabaseHelper();
 
+  final SubscriptionHistoryRepository _historyRepo =
+      SubscriptionHistoryRepository();
+
   // INSERTAR SUSCRIPCIÓN
+
   Future<int> insertSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 
     final id = await db.insert('subscriptions', sub.toMap());
 
+    await _historyRepo.insertHistory(
+      SubscriptionHistory(
+        subscriptionId: id,
+
+        action: "CREATED",
+
+        actionDate: DateTime.now(),
+      ),
+    );
+
     return id;
   }
 
   // OBTENER BÁSICAS
+
   Future<List<Subscription>> getSubscriptions() async {
     final db = await dbHelper.database;
 
@@ -34,6 +52,7 @@ class SubscriptionRepository {
 
         billingCycle: BillingCycle.values.firstWhere(
           (e) => e.name == map['billing_cycle'],
+
           orElse: () => BillingCycle.monthly,
         ),
 
@@ -48,7 +67,8 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // FULL (JOIN MANUAL)
+  // FULL
+
   Future<List<SubscriptionFull>> getSubscriptionsFull() async {
     final db = await dbHelper.database;
 
@@ -70,6 +90,7 @@ class SubscriptionRepository {
 
         billingCycle: BillingCycle.values.firstWhere(
           (e) => e.name == s['billing_cycle'],
+
           orElse: () => BillingCycle.monthly,
         ),
 
@@ -108,7 +129,8 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // CANCELAR SUSCRIPCIÓN (SOFT DELETE)
+  // CANCELAR
+
   Future<void> cancelSubscription(int id) async {
     final db = await dbHelper.database;
 
@@ -121,9 +143,20 @@ class SubscriptionRepository {
 
       whereArgs: [id],
     );
+
+    await _historyRepo.insertHistory(
+      SubscriptionHistory(
+        subscriptionId: id,
+
+        action: "CANCELLED",
+
+        actionDate: DateTime.now(),
+      ),
+    );
   }
 
-  // REACTIVAR SUSCRIPCIÓN
+  // REACTIVAR
+
   Future<void> restoreSubscription(int id) async {
     final db = await dbHelper.database;
 
@@ -136,9 +169,20 @@ class SubscriptionRepository {
 
       whereArgs: [id],
     );
+
+    await _historyRepo.insertHistory(
+      SubscriptionHistory(
+        subscriptionId: id,
+
+        action: "RESTORED",
+
+        actionDate: DateTime.now(),
+      ),
+    );
   }
 
   // UPDATE
+
   Future<void> updateSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 

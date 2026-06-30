@@ -8,6 +8,9 @@ import '../providers/payment_history_provider.dart';
 
 import '../core/subscription_status.dart';
 
+import '../providers/subscription_history_provider.dart';
+import '../models/subscription_history.dart';
+
 class SubscriptionDetailScreen extends StatefulWidget {
   final SubscriptionFull data;
 
@@ -38,6 +41,12 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
 
     Future.microtask(() {
       context.read<PaymentHistoryProvider>().loadPayments();
+
+      if (widget.data.subscription.id != null) {
+        context.read<SubscriptionHistoryProvider>().loadHistory(
+          widget.data.subscription.id!,
+        );
+      }
     });
   }
 
@@ -74,7 +83,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       return;
     }
 
-    // 🚫 BLOQUEAR PAGOS EN CANCELADAS
+    // BLOQUEAR PAGOS EN CANCELADAS
     if (subscription.isCancelled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -168,10 +177,10 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(subscription.serviceName)),
 
-      body: Consumer<PaymentHistoryProvider>(
-        builder: (context, provider, _) {
+      body: Consumer2<PaymentHistoryProvider, SubscriptionHistoryProvider>(
+        builder: (context, paymentProvider, historyProvider, _) {
           final payments =
-              provider.payments
+              paymentProvider.payments
                   .where((p) => p.subscriptionId == subscription.id)
                   .toList()
                 ..sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
@@ -184,6 +193,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
           final lastCovered = _getLastCoveredUntil(payments);
 
           final status = SubscriptionStatusHelper.getStatus(lastCovered);
+
+          final history = historyProvider.history;
 
           final cycleText = subscription.billingCycle == BillingCycle.monthly
               ? "mes"
@@ -256,6 +267,55 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                                     "Cubre hasta: ${p.coveredUntil.toString().substring(0, 10)}",
                                   ),
                                 ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                const Divider(height: 30),
+
+                const Text(
+                  "Historial de cambios",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 10),
+
+                Expanded(
+                  child: history.isEmpty
+                      ? const Center(child: Text("No hay cambios registrados"))
+                      : ListView.builder(
+                          itemCount: history.length,
+
+                          itemBuilder: (context, index) {
+                            final h = history[index];
+
+                            IconData icon;
+
+                            switch (h.action) {
+                              case "CREATED":
+                                icon = Icons.add_circle;
+                                break;
+
+                              case "CANCELLED":
+                                icon = Icons.cancel;
+                                break;
+
+                              case "RESTORED":
+                                icon = Icons.restore;
+                                break;
+
+                              default:
+                                icon = Icons.history;
+                            }
+
+                            return ListTile(
+                              leading: Icon(icon),
+
+                              title: Text(h.action),
+
+                              subtitle: Text(
+                                h.actionDate.toString().substring(0, 10),
                               ),
                             );
                           },
