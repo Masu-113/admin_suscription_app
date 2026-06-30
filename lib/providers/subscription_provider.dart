@@ -15,6 +15,7 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> loadSubscriptions() async {
     try {
       isLoading = true;
+
       notifyListeners();
 
       subscriptions = await _repo.getSubscriptionsFull();
@@ -22,6 +23,7 @@ class SubscriptionProvider extends ChangeNotifier {
       debugPrint("Error loading subscriptions: $e");
     } finally {
       isLoading = false;
+
       notifyListeners();
     }
   }
@@ -38,6 +40,13 @@ class SubscriptionProvider extends ChangeNotifier {
   // CANCELAR SUSCRIPCIÓN
   Future<void> cancelSubscription(int id) async {
     await _repo.cancelSubscription(id);
+
+    await loadSubscriptions();
+  }
+
+  // REACTIVAR SUSCRIPCIÓN
+  Future<void> restoreSubscription(int id) async {
+    await _repo.restoreSubscription(id);
 
     await loadSubscriptions();
   }

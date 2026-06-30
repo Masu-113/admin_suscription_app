@@ -7,7 +7,7 @@ import '../../models/subscription.dart';
 class SubscriptionRepository {
   final dbHelper = DatabaseHelper();
 
-  // 🟢 INSERTAR SUSCRIPCIÓN
+  // INSERTAR SUSCRIPCIÓN
   Future<int> insertSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 
@@ -16,7 +16,7 @@ class SubscriptionRepository {
     return id;
   }
 
-  // 🟢 OBTENER BÁSICAS
+  // OBTENER BÁSICAS
   Future<List<Subscription>> getSubscriptions() async {
     final db = await dbHelper.database;
 
@@ -48,7 +48,7 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // 🟢 FULL (JOIN MANUAL)
+  // FULL (JOIN MANUAL)
   Future<List<SubscriptionFull>> getSubscriptionsFull() async {
     final db = await dbHelper.database;
 
@@ -108,7 +108,7 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // 🟡 CANCELAR SUSCRIPCIÓN (SOFT DELETE)
+  // CANCELAR SUSCRIPCIÓN (SOFT DELETE)
   Future<void> cancelSubscription(int id) async {
     final db = await dbHelper.database;
 
@@ -123,7 +123,22 @@ class SubscriptionRepository {
     );
   }
 
-  // 🟢 UPDATE
+  // REACTIVAR SUSCRIPCIÓN
+  Future<void> restoreSubscription(int id) async {
+    final db = await dbHelper.database;
+
+    await db.update(
+      'subscriptions',
+
+      {'isCancelled': 0},
+
+      where: 'id = ?',
+
+      whereArgs: [id],
+    );
+  }
+
+  // UPDATE
   Future<void> updateSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 

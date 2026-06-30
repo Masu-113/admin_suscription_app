@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/payment_history_provider.dart';
 
-//import '../core/subscription_status.dart';
-
 import 'subscription_detail_screen.dart';
 
 class CancelledSubscriptionScreen extends StatelessWidget {
@@ -13,6 +11,52 @@ class CancelledSubscriptionScreen extends StatelessWidget {
 
   String formatDate(DateTime date) {
     return date.toLocal().toString().split(' ')[0];
+  }
+
+  Future<void> _restoreSubscription(
+    BuildContext context,
+    int id,
+    String name,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Reactivar suscripción"),
+
+          content: Text("¿Deseas reactivar $name?"),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+
+              child: const Text("Cancelar"),
+            ),
+
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+
+              child: const Text("Reactivar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    await context.read<SubscriptionProvider>().restoreSubscription(id);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Suscripción reactivada correctamente.")),
+    );
   }
 
   @override
@@ -66,6 +110,22 @@ class CancelledSubscriptionScreen extends StatelessWidget {
                   ),
 
                   leading: const Icon(Icons.cancel, color: Colors.red),
+
+                  trailing: IconButton(
+                    icon: const Icon(Icons.restore, color: Colors.green),
+
+                    tooltip: "Reactivar",
+
+                    onPressed: () {
+                      _restoreSubscription(
+                        context,
+
+                        subscription.id!,
+
+                        subscription.serviceName,
+                      );
+                    },
+                  ),
 
                   onTap: () {
                     Navigator.push(
