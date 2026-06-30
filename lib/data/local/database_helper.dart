@@ -10,7 +10,7 @@ class DatabaseHelper {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'subscriptions.db'),
 
-      version: 4,
+      version: 5,
 
       onCreate: (db, version) async {
         // 🟢 SUBSCRIPTIONS
@@ -23,7 +23,8 @@ class DatabaseHelper {
             billing_cycle TEXT NOT NULL,
             status TEXT NOT NULL,
             category_id INTEGER,
-            payment_method_id INTEGER
+            payment_method_id INTEGER,
+            isCancelled integer NOT NULL DEFAULT 0
           )
         ''');
 
@@ -57,11 +58,11 @@ class DatabaseHelper {
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
-        // versión 3 → 4
-        if (oldVersion < 4) {
+        // versión 4 → 5
+        if (oldVersion < 5) {
           await db.execute('''
-            ALTER TABLE payment_history
-            ADD COLUMN covered_until TEXT
+          ALTER TABLE subscriptions
+          ADD COLUMN isCancelled INTEGER NOT NULL DEFAULT 0
           ''');
         }
       },

@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/payment_history_provider.dart';
 
-// import '../models/payment_history.dart';
 import '../core/subscription_status.dart';
 
 import 'add_subscription_screen.dart';
@@ -33,6 +32,56 @@ class _HomeScreenState extends State<HomeScreen> {
     return date.toLocal().toString().split(' ')[0];
   }
 
+  Future<void> _cancelSubscription(int id, String name) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Cancelar suscripción"),
+
+          content: Text(
+            "¿Deseas cancelar $name?\n\n"
+            "La suscripción desaparecerá de activas, "
+            "pero conservará su historial de pagos.",
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+
+              child: const Text("No"),
+            ),
+
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+
+              child: const Text("Sí"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    await context.read<SubscriptionProvider>().cancelSubscription(id);
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(this.context).showSnackBar(
+      const SnackBar(content: Text("Suscripción cancelada correctamente.")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final subscriptionProvider = Provider.of<SubscriptionProvider>(context);
@@ -46,15 +95,19 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (subscriptionProvider.subscriptions.isEmpty) {
-            return const Center(child: Text("No hay suscripciones"));
+          final activeSubscriptions = subscriptionProvider.subscriptions
+              .where((s) => !s.subscription.isCancelled)
+              .toList();
+
+          if (activeSubscriptions.isEmpty) {
+            return const Center(child: Text("No hay suscripciones activas"));
           }
 
           return ListView.builder(
-            itemCount: subscriptionProvider.subscriptions.length,
+            itemCount: activeSubscriptions.length,
 
             itemBuilder: (context, index) {
-              final sub = subscriptionProvider.subscriptions[index];
+              final sub = activeSubscriptions[index];
 
               final subscription = sub.subscription;
 
@@ -80,9 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text("Inicio: ${formatDate(subscription.startDate)}"),
 
                       Text(
-                        "Estado: ${SubscriptionStatusHelper.getText(status)}",
+                        "Estado: "
+                        "${SubscriptionStatusHelper.getText(status)}",
+
                         style: TextStyle(
                           color: SubscriptionStatusHelper.getColor(status),
+
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -94,8 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text("Payment: ${sub.paymentMethodName}"),
                     ],
                   ),
-
-                  isThreeLine: false,
 
                   onTap: () {
                     Navigator.push(
@@ -132,13 +186,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
 
                       IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
+                        icon: const Icon(Icons.cancel, color: Colors.red),
 
                         onPressed: () {
                           if (subscription.id != null) {
-                            context
-                                .read<SubscriptionProvider>()
-                                .deleteSubscription(subscription.id!);
+                            _cancelSubscription(
+                              subscription.id!,
+
+                              subscription.serviceName,
+                            );
                           }
                         },
                       ),

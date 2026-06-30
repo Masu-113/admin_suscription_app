@@ -1,5 +1,6 @@
 import 'package:admin_suscription_app/models/billing_cycle.dart';
 import 'package:admin_suscription_app/models/subscription_full.dart';
+
 import '../local/database_helper.dart';
 import '../../models/subscription.dart';
 
@@ -24,7 +25,9 @@ class SubscriptionRepository {
     return result.map((map) {
       return Subscription(
         id: map['id'] as int?,
+
         serviceName: (map['service_name'] ?? '') as String,
+
         cost: (map['cost'] as num).toDouble(),
 
         startDate: DateTime.parse(map['start_date'] as String),
@@ -35,7 +38,11 @@ class SubscriptionRepository {
         ),
 
         status: (map['status'] ?? 'Active') as String,
+
+        isCancelled: map['isCancelled'] == 1,
+
         categoryId: map['category_id'] as int?,
+
         paymentMethodId: map['payment_method_id'] as int?,
       );
     }).toList();
@@ -46,13 +53,17 @@ class SubscriptionRepository {
     final db = await dbHelper.database;
 
     final subs = await db.query('subscriptions');
+
     final categories = await db.query('categories');
+
     final payments = await db.query('payment_methods');
 
     return subs.map((s) {
       final sub = Subscription(
         id: s['id'] as int?,
+
         serviceName: (s['service_name'] ?? '') as String,
+
         cost: (s['cost'] as num).toDouble(),
 
         startDate: DateTime.parse(s['start_date'] as String),
@@ -63,39 +74,53 @@ class SubscriptionRepository {
         ),
 
         status: (s['status'] ?? 'Active') as String,
+
+        isCancelled: s['isCancelled'] == 1,
+
         categoryId: s['category_id'] as int?,
+
         paymentMethodId: s['payment_method_id'] as int?,
       );
 
-      // 🟢 CATEGORY NAME SAFE
       final categoryName =
           categories.firstWhere(
                 (c) => c['id'] == sub.categoryId,
+
                 orElse: () => {'name': 'Unknown'},
               )['name']
               as String;
 
-      // 🟢 PAYMENT NAME SAFE
       final paymentName =
           payments.firstWhere(
                 (p) => p['id'] == sub.paymentMethodId,
+
                 orElse: () => {'type': 'Unknown'},
               )['type']
               as String;
 
       return SubscriptionFull(
         subscription: sub,
+
         categoryName: categoryName,
+
         paymentMethodName: paymentName,
       );
     }).toList();
   }
 
-  // 🟢 DELETE
-  Future<void> deleteSubscription(int id) async {
+  // 🟡 CANCELAR SUSCRIPCIÓN (SOFT DELETE)
+  Future<void> cancelSubscription(int id) async {
     final db = await dbHelper.database;
 
-    await db.delete('subscriptions', where: 'id = ?', whereArgs: [id]);
+    await db.update(
+      'subscriptions',
+
+      {'isCancelled': 1},
+
+      where: 'id = ?',
+
+      whereArgs: [id],
+    );
   }
 
   // 🟢 UPDATE
@@ -104,8 +129,11 @@ class SubscriptionRepository {
 
     await db.update(
       'subscriptions',
+
       sub.toMap(),
+
       where: 'id = ?',
+
       whereArgs: [sub.id],
     );
   }

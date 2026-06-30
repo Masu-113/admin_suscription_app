@@ -35,9 +35,9 @@ class SubscriptionProvider extends ChangeNotifier {
     return id;
   }
 
-  // DELETE
-  Future<void> deleteSubscription(int id) async {
-    await _repo.deleteSubscription(id);
+  // CANCELAR SUSCRIPCIÓN
+  Future<void> cancelSubscription(int id) async {
+    await _repo.cancelSubscription(id);
 
     await loadSubscriptions();
   }

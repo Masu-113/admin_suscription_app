@@ -17,6 +17,8 @@ class Subscription {
 
   int? paymentMethodId;
 
+  bool isCancelled;
+
   Subscription({
     this.id,
     required this.serviceName,
@@ -26,6 +28,7 @@ class Subscription {
     required this.status,
     this.categoryId,
     this.paymentMethodId,
+    this.isCancelled = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -38,6 +41,7 @@ class Subscription {
       'status': status,
       'category_id': categoryId,
       'payment_method_id': paymentMethodId,
+      'isCancelled': isCancelled ? 1 : 0,
     };
   }
 
@@ -54,6 +58,7 @@ class Subscription {
       status: map['status'],
       categoryId: map['category_id'],
       paymentMethodId: map['payment_method_id'],
+      isCancelled: map['isCancelled'] == 1,
     );
   }
 }
