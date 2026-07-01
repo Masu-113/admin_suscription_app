@@ -13,6 +13,8 @@ import 'subscription_detail_screen.dart';
 import 'cancelled_subscription_screen.dart';
 import 'dashboard_screen.dart';
 
+import '../providers/user_provider.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,7 +28,13 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     Future.microtask(() {
-      context.read<PaymentHistoryProvider>().loadPayments();
+      final user = context.read<UserProvider>().currentUser;
+
+      if (user != null) {
+        context.read<SubscriptionProvider>().loadUserSubscriptions(user.id!);
+
+        context.read<PaymentHistoryProvider>().loadUserPayments(user.id!);
+      }
     });
   }
 

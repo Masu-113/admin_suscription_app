@@ -18,21 +18,13 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()..loadUsers()),
 
-        ChangeNotifierProvider(
-          create: (_) => SubscriptionProvider()..loadSubscriptions(),
-        ),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
 
-        ChangeNotifierProvider(
-          create: (_) => CategoryProvider()..loadCategories(),
-        ),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
 
-        ChangeNotifierProvider(
-          create: (_) => PaymentMethodProvider()..loadMethods(),
-        ),
+        ChangeNotifierProvider(create: (_) => PaymentMethodProvider()),
 
-        ChangeNotifierProvider(
-          create: (_) => PaymentHistoryProvider()..loadPayments(),
-        ),
+        ChangeNotifierProvider(create: (_) => PaymentHistoryProvider()),
 
         ChangeNotifierProvider(create: (_) => SubscriptionHistoryProvider()),
       ],

@@ -135,6 +135,14 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
 
+    if (currentUser == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("No hay usuario activo")));
+
+      return;
+    }
+
     final subscription = Subscription(
       id: widget.subscription?.id,
 
@@ -152,7 +160,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
       paymentMethodId: selectedPaymentId,
 
-      userId: currentUser?.id,
+      userId: currentUser.id,
     );
 
     final subscriptionProvider = context.read<SubscriptionProvider>();
