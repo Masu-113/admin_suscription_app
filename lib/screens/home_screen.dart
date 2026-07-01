@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../providers/subscription_provider.dart';
 import '../providers/payment_history_provider.dart';
-
 import '../core/subscription_status.dart';
 
 import 'add_subscription_screen.dart';
@@ -32,9 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (user != null) {
         context.read<SubscriptionProvider>().loadUserSubscriptions(user.id!);
-
-        context.read<PaymentHistoryProvider>().loadUserPayments(user.id!);
       }
+
+      // Cargar todos los pagos en lugar de solo los del usuario
+      context.read<PaymentHistoryProvider>().loadPayments();
     });
   }
 
@@ -45,31 +45,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _cancelSubscription(int id, String name) async {
     final confirm = await showDialog<bool>(
       context: context,
-
       builder: (_) {
         return AlertDialog(
           title: const Text("Cancelar suscripción"),
-
           content: Text(
             "¿Deseas cancelar $name?\n\n"
             "La suscripción desaparecerá de activas, "
             "pero conservará su historial de pagos.",
           ),
-
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context, false);
               },
-
               child: const Text("No"),
             ),
-
             TextButton(
               onPressed: () {
                 Navigator.pop(context, true);
               },
-
               child: const Text("Sí"),
             ),
           ],
@@ -98,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("Mis Suscripciones")),
-
       body: Consumer<PaymentHistoryProvider>(
         builder: (context, paymentProvider, _) {
           if (subscriptionProvider.isLoading) {
@@ -115,12 +108,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return ListView.builder(
             itemCount: activeSubscriptions.length,
-
             itemBuilder: (context, index) {
               final sub = activeSubscriptions[index];
-
               final subscription = sub.subscription;
 
+              // Obtener el último pago sin filtrar por usuario
               final lastPayment = paymentProvider.getLastPaymentForSubscription(
                 subscription.id!,
               );
@@ -132,60 +124,42 @@ class _HomeScreenState extends State<HomeScreen> {
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-
                 child: ListTile(
                   title: Text(subscription.serviceName),
-
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       Text("Inicio: ${formatDate(subscription.startDate)}"),
-
                       Text(
-                        "Estado: "
-                        "${SubscriptionStatusHelper.getText(status)}",
-
+                        "Estado: ${SubscriptionStatusHelper.getText(status)}",
                         style: TextStyle(
                           color: SubscriptionStatusHelper.getColor(status),
-
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       Text("Activo hasta: ${formatDate(lastCovered)}"),
-
                       Text("Category: ${sub.categoryName}"),
-
                       Text("Payment: ${sub.paymentMethodName}"),
                     ],
                   ),
-
                   onTap: () {
                     Navigator.push(
                       context,
-
                       MaterialPageRoute(
                         builder: (_) => SubscriptionDetailScreen(data: sub),
                       ),
                     );
                   },
-
                   leading: const Icon(Icons.subscriptions),
-
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
-
                     children: [
                       Text("\$${subscription.cost}"),
-
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
-
                         onPressed: () async {
                           await Navigator.push(
                             context,
-
                             MaterialPageRoute(
                               builder: (_) => AddSubscriptionScreen(
                                 subscription: subscription,
@@ -194,15 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
-
                       IconButton(
                         icon: const Icon(Icons.cancel, color: Colors.red),
-
                         onPressed: () {
                           if (subscription.id != null) {
                             _cancelSubscription(
                               subscription.id!,
-
                               subscription.serviceName,
                             );
                           }
@@ -216,88 +187,63 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
-
         children: [
           FloatingActionButton(
             heroTag: "dashboard",
-
             backgroundColor: Colors.blue,
-
             child: const Icon(Icons.dashboard),
-
             onPressed: () {
               Navigator.push(
                 context,
-
                 MaterialPageRoute(builder: (_) => const DashboardScreen()),
               );
             },
           ),
           FloatingActionButton(
             heroTag: "add_sub",
-
             child: const Icon(Icons.add),
-
             onPressed: () {
               Navigator.push(
                 context,
-
                 MaterialPageRoute(
                   builder: (_) => const AddSubscriptionScreen(),
                 ),
               );
             },
           ),
-
           const SizedBox(height: 10),
-
           FloatingActionButton(
             heroTag: "categories",
-
             backgroundColor: Colors.orange,
-
             child: const Icon(Icons.category),
-
             onPressed: () {
               Navigator.push(
                 context,
-
                 MaterialPageRoute(builder: (_) => const CategoryScreen()),
               );
             },
           ),
-
           const SizedBox(height: 10),
-
           FloatingActionButton(
             heroTag: "payments",
-
             backgroundColor: Colors.green,
-
             child: const Icon(Icons.payment),
-
             onPressed: () {
               Navigator.push(
                 context,
-
                 MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
               );
             },
           ),
           FloatingActionButton(
             heroTag: "cancelled",
-
             backgroundColor: Colors.red,
-
             child: const Icon(Icons.history),
-
             onPressed: () {
               Navigator.push(
                 context,
-
                 MaterialPageRoute(
                   builder: (_) => const CancelledSubscriptionScreen(),
                 ),

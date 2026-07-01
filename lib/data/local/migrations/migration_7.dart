@@ -23,13 +23,5 @@ class Migration7 {
       ADD COLUMN user_id INTEGER
 
     ''');
-
-    await db.execute('''
-
-      ALTER TABLE payment_history
-
-      ADD COLUMN user_id INTEGER
-
-    ''');
   }
 }

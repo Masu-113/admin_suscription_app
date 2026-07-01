@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../models/payment_history.dart';
 import '../data/repositories/payment_history_repository.dart';
 
@@ -9,18 +8,12 @@ class PaymentHistoryProvider extends ChangeNotifier {
   final PaymentHistoryRepository _repo = PaymentHistoryRepository();
 
   List<PaymentHistory> payments = [];
-
   bool isLoading = false;
 
-  int? currentUserId;
-
-  // CARGAR TODOS
-  // futuro uso admin
-
+  // CARGAR TODOS LOS PAGOS
   Future<void> loadPayments() async {
     try {
       isLoading = true;
-
       notifyListeners();
 
       payments = await _repo.getPayments();
@@ -28,33 +21,11 @@ class PaymentHistoryProvider extends ChangeNotifier {
       debugPrint("Error loading payments: $e");
     } finally {
       isLoading = false;
-
-      notifyListeners();
-    }
-  }
-
-  // CARGAR PAGOS DEL USUARIO
-
-  Future<void> loadUserPayments(int userId) async {
-    try {
-      isLoading = true;
-
-      currentUserId = userId;
-
-      notifyListeners();
-
-      payments = await _repo.getPaymentsByUser(userId);
-    } catch (e) {
-      debugPrint("Error loading user payments: $e");
-    } finally {
-      isLoading = false;
-
       notifyListeners();
     }
   }
 
   // AGREGAR PAGO
-
   Future<bool> addPayment(PaymentHistory payment) async {
     final result = _validatePayment(payment);
 
@@ -63,12 +34,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
     }
 
     await _repo.insertPayment(payment);
-
-    if (currentUserId != null) {
-      await loadUserPayments(currentUserId!);
-    } else {
-      await loadPayments();
-    }
+    await loadPayments(); // Cargar todos los pagos después de agregar uno nuevo
 
     return true;
   }
@@ -101,27 +67,16 @@ class PaymentHistoryProvider extends ChangeNotifier {
     }
 
     list.sort((a, b) => b.coveredUntil.compareTo(a.coveredUntil));
-
     return list.first;
   }
 
   Future<void> updatePayment(PaymentHistory payment) async {
     await _repo.updatePayment(payment);
-
-    if (currentUserId != null) {
-      await loadUserPayments(currentUserId!);
-    } else {
-      await loadPayments();
-    }
+    await loadPayments(); // Cargar todos los pagos después de actualizar uno
   }
 
   Future<void> deletePayment(int id) async {
     await _repo.deletePayment(id);
-
-    if (currentUserId != null) {
-      await loadUserPayments(currentUserId!);
-    } else {
-      await loadPayments();
-    }
+    await loadPayments(); // Cargar todos los pagos después de eliminar uno
   }
 }

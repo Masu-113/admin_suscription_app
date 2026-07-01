@@ -97,9 +97,7 @@ class DatabaseHelper {
 
             subscription_id INTEGER NOT NULL,
 
-            covered_until TEXT NOT NULL,
-
-            user_id INTEGER
+            covered_until TEXT NOT NULL
 
           )
         ''');
