@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 
 import 'migrations/migration_5.dart';
 import 'migrations/migration_6.dart';
+import 'migrations/migration_7.dart';
 
 class DatabaseHelper {
   static Database? _database;
@@ -15,7 +16,7 @@ class DatabaseHelper {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'subscriptions.db'),
 
-      version: 6,
+      version: 7,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -37,7 +38,23 @@ class DatabaseHelper {
 
             payment_method_id INTEGER,
 
-            isCancelled INTEGER NOT NULL DEFAULT 0
+            isCancelled INTEGER NOT NULL DEFAULT 0,
+
+            user_id INTEGER
+
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE users(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            name TEXT NOT NULL,
+
+            email TEXT NOT NULL UNIQUE,
+
+            password TEXT NOT NULL
 
           )
         ''');
@@ -75,7 +92,9 @@ class DatabaseHelper {
 
             subscription_id INTEGER NOT NULL,
 
-            covered_until TEXT NOT NULL
+            covered_until TEXT NOT NULL,
+
+            user_id INTEGER
 
           )
         ''');
@@ -102,6 +121,10 @@ class DatabaseHelper {
 
         if (oldVersion < 6) {
           await Migration6.run(db);
+        }
+
+        if (oldVersion < 7) {
+          await Migration7.run(db);
         }
       },
     );

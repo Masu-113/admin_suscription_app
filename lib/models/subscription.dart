@@ -1,64 +1,97 @@
-import 'billing_cycle.dart';
+import 'package:admin_suscription_app/models/billing_cycle.dart';
 
 class Subscription {
-  int? id;
+  final int? id;
 
-  String serviceName;
+  final String serviceName;
 
-  double cost;
+  final double cost;
 
-  DateTime startDate;
+  final DateTime startDate;
 
-  BillingCycle billingCycle;
+  final BillingCycle billingCycle;
 
-  String status;
+  final String status;
 
-  int? categoryId;
+  final bool isCancelled;
 
-  int? paymentMethodId;
+  final int? categoryId;
 
-  bool isCancelled;
+  final int? paymentMethodId;
+
+  final int? userId;
 
   Subscription({
     this.id,
+
     required this.serviceName,
+
     required this.cost,
+
     required this.startDate,
+
     required this.billingCycle,
+
     required this.status,
-    this.categoryId,
-    this.paymentMethodId,
+
     this.isCancelled = false,
+
+    this.categoryId,
+
+    this.paymentMethodId,
+
+    this.userId,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+
       'service_name': serviceName,
+
       'cost': cost,
+
       'start_date': startDate.toIso8601String(),
+
       'billing_cycle': billingCycle.name,
+
       'status': status,
-      'category_id': categoryId,
-      'payment_method_id': paymentMethodId,
+
       'isCancelled': isCancelled ? 1 : 0,
+
+      'category_id': categoryId,
+
+      'payment_method_id': paymentMethodId,
+
+      'user_id': userId,
     };
   }
 
   factory Subscription.fromMap(Map<String, dynamic> map) {
     return Subscription(
-      id: map['id'],
-      serviceName: map['service_name'],
-      cost: map['cost'],
-      startDate: DateTime.parse(map['start_date']),
+      id: map['id'] as int?,
+
+      serviceName: map['service_name'] as String,
+
+      cost: (map['cost'] as num).toDouble(),
+
+      startDate: DateTime.parse(map['start_date'] as String),
+
       billingCycle: BillingCycle.values.firstWhere(
         (e) => e.name == map['billing_cycle'],
+
         orElse: () => BillingCycle.monthly,
       ),
-      status: map['status'],
-      categoryId: map['category_id'],
-      paymentMethodId: map['payment_method_id'],
+
+      status: map['status'] as String,
+
       isCancelled: map['isCancelled'] == 1,
+
+      categoryId: map['category_id'] as int?,
+
+      paymentMethodId: map['payment_method_id'] as int?,
+
+      userId: map['user_id'] as int?,
     );
   }
 }

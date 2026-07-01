@@ -63,6 +63,8 @@ class SubscriptionRepository {
         categoryId: map['category_id'] as int?,
 
         paymentMethodId: map['payment_method_id'] as int?,
+
+        userId: map['user_id'] as int?,
       );
     }).toList();
   }
@@ -101,6 +103,8 @@ class SubscriptionRepository {
         categoryId: s['category_id'] as int?,
 
         paymentMethodId: s['payment_method_id'] as int?,
+
+        userId: s['user_id'] as int?,
       );
 
       final categoryName =
