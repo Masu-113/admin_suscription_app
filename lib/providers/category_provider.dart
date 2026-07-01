@@ -10,9 +10,15 @@ class CategoryProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
+  int? currentUserId;
+
+  // TODAS LAS CATEGORIAS
+  // futuro uso admin
+
   Future<void> loadCategories() async {
     try {
       isLoading = true;
+
       notifyListeners();
 
       categories = await _repo.getCategories();
@@ -20,25 +26,64 @@ class CategoryProvider extends ChangeNotifier {
       debugPrint("Error loading categories: $e");
     } finally {
       isLoading = false;
+
       notifyListeners();
     }
   }
 
+  // CATEGORIAS DEL USUARIO
+
+  Future<void> loadUserCategories(int userId) async {
+    try {
+      currentUserId = userId;
+
+      isLoading = true;
+
+      notifyListeners();
+
+      categories = await _repo.getCategoriesByUser(userId);
+    } catch (e) {
+      debugPrint("Error loading user categories: $e");
+    } finally {
+      isLoading = false;
+
+      notifyListeners();
+    }
+  }
+
+  // ADD
+
   Future<void> addCategory(Category category) async {
     await _repo.insertCategory(category);
 
-    await loadCategories();
+    if (currentUserId != null) {
+      await loadUserCategories(currentUserId!);
+    } else {
+      await loadCategories();
+    }
   }
+
+  // UPDATE
 
   Future<void> updateCategory(Category category) async {
     await _repo.updateCategory(category);
 
-    await loadCategories();
+    if (currentUserId != null) {
+      await loadUserCategories(currentUserId!);
+    } else {
+      await loadCategories();
+    }
   }
+
+  // DELETE
 
   Future<void> deleteCategory(int id) async {
     await _repo.deleteCategory(id);
 
-    await loadCategories();
+    if (currentUserId != null) {
+      await loadUserCategories(currentUserId!);
+    } else {
+      await loadCategories();
+    }
   }
 }

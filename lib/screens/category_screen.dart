@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/category.dart';
 import '../providers/category_provider.dart';
+import '../providers/user_provider.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -14,13 +15,32 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   final controller = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final user = context.read<UserProvider>().currentUser;
+
+      if (user != null) {
+        context.read<CategoryProvider>().loadUserCategories(user.id!);
+      }
+    });
+  }
+
   Future<void> add() async {
     if (controller.text.trim().isEmpty) {
       return;
     }
 
+    final user = context.read<UserProvider>().currentUser;
+
+    if (user == null) {
+      return;
+    }
+
     await context.read<CategoryProvider>().addCategory(
-      Category(name: controller.text.trim()),
+      Category(name: controller.text.trim(), userId: user.id),
     );
 
     controller.clear();
