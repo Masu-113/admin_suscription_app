@@ -1,23 +1,27 @@
 class PaymentMethod {
-  int? id;
+  final int? id;
 
-  String type;
+  final String type;
 
-  String? details;
+  final String? details;
 
-  PaymentMethod({this.id, required this.type, this.details});
+  final int? userId;
+
+  PaymentMethod({this.id, required this.type, this.details, this.userId});
 
   Map<String, dynamic> toMap() {
-    return {'id': id, 'type': type, 'details': details};
+    return {'id': id, 'type': type, 'details': details, 'user_id': userId};
   }
 
   factory PaymentMethod.fromMap(Map<String, dynamic> map) {
     return PaymentMethod(
-      id: map['id'],
+      id: map['id'] as int?,
 
-      type: map['type'],
+      type: map['type'] as String,
 
-      details: map['details'],
+      details: map['details'] as String?,
+
+      userId: map['user_id'] as int?,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/payment_method.dart';
 import '../providers/payment_method_provider.dart';
+import '../providers/user_provider.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   const PaymentMethodScreen({super.key});
@@ -16,8 +17,27 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   final detailController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final user = context.read<UserProvider>().currentUser;
+
+      if (user != null) {
+        context.read<PaymentMethodProvider>().loadUserMethods(user.id!);
+      }
+    });
+  }
+
   Future<void> add() async {
     if (typeController.text.trim().isEmpty) {
+      return;
+    }
+
+    final user = context.read<UserProvider>().currentUser;
+
+    if (user == null) {
       return;
     }
 
@@ -26,6 +46,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         type: typeController.text.trim(),
 
         details: detailController.text.trim(),
+
+        userId: user.id,
       ),
     );
 
