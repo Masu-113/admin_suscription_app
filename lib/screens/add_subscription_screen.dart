@@ -10,6 +10,8 @@ import '../providers/payment_method_provider.dart';
 import '../models/payment_history.dart';
 import '../providers/payment_history_provider.dart';
 
+import '../providers/user_provider.dart';
+
 class AddSubscriptionScreen extends StatefulWidget {
   final Subscription? subscription;
 
@@ -102,7 +104,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       return;
     }
 
-    // 🚫 No permitir fechas futuras
+    // No permitir fechas futuras
     final today = DateTime.now();
 
     final startDateOnly = DateTime(
@@ -131,6 +133,8 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       return;
     }
 
+    final currentUser = context.read<UserProvider>().currentUser;
+
     final subscription = Subscription(
       id: widget.subscription?.id,
 
@@ -147,15 +151,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       categoryId: selectedCategoryId,
 
       paymentMethodId: selectedPaymentId,
+
+      userId: currentUser?.id,
     );
 
     final subscriptionProvider = context.read<SubscriptionProvider>();
 
-    // ✏️ EDITAR
+    // EDITAR
     if (isEditing) {
       await subscriptionProvider.updateSubscription(subscription);
     }
-    // ➕ CREAR
+    // CREAR
     else {
       final id = await subscriptionProvider.addSubscription(subscription);
 
@@ -241,7 +247,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
             const SizedBox(height: 15),
 
-            // 📅 START DATE
+            // START DATE
             Row(
               children: [
                 Expanded(
@@ -255,7 +261,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
             const SizedBox(height: 10),
 
-            // 🔁 BILLING CYCLE
+            // BILLING CYCLE
             DropdownButtonFormField<BillingCycle>(
               initialValue: selectedCycle,
               items: BillingCycle.values.map((c) {

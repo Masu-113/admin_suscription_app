@@ -11,7 +11,8 @@ class SubscriptionProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
-  // LOAD FULL DATA
+  // LOAD TODAS
+  // (futuro uso administrativo)
 
   Future<void> loadSubscriptions() async {
     try {
@@ -22,6 +23,24 @@ class SubscriptionProvider extends ChangeNotifier {
       subscriptions = await _repo.getSubscriptionsFull();
     } catch (e) {
       debugPrint("Error loading subscriptions: $e");
+    } finally {
+      isLoading = false;
+
+      notifyListeners();
+    }
+  }
+
+  // LOAD POR USUARIO
+
+  Future<void> loadUserSubscriptions(int userId) async {
+    try {
+      isLoading = true;
+
+      notifyListeners();
+
+      subscriptions = await _repo.getSubscriptionsFullByUser(userId);
+    } catch (e) {
+      debugPrint("Error loading user subscriptions: $e");
     } finally {
       isLoading = false;
 

@@ -133,6 +133,76 @@ class SubscriptionRepository {
     }).toList();
   }
 
+  // FULL POR USUARIO
+
+  Future<List<SubscriptionFull>> getSubscriptionsFullByUser(int userId) async {
+    final db = await dbHelper.database;
+
+    final subs = await db.query(
+      'subscriptions',
+
+      where: 'user_id = ?',
+
+      whereArgs: [userId],
+    );
+
+    final categories = await db.query('categories');
+
+    final payments = await db.query('payment_methods');
+
+    return subs.map((s) {
+      final sub = Subscription(
+        id: s['id'] as int?,
+
+        serviceName: (s['service_name'] ?? '') as String,
+
+        cost: (s['cost'] as num).toDouble(),
+
+        startDate: DateTime.parse(s['start_date'] as String),
+
+        billingCycle: BillingCycle.values.firstWhere(
+          (e) => e.name == s['billing_cycle'],
+
+          orElse: () => BillingCycle.monthly,
+        ),
+
+        status: (s['status'] ?? 'Active') as String,
+
+        isCancelled: s['isCancelled'] == 1,
+
+        categoryId: s['category_id'] as int?,
+
+        paymentMethodId: s['payment_method_id'] as int?,
+
+        userId: s['user_id'] as int?,
+      );
+
+      final categoryName =
+          categories.firstWhere(
+                (c) => c['id'] == sub.categoryId,
+
+                orElse: () => {'name': 'Unknown'},
+              )['name']
+              as String;
+
+      final paymentName =
+          payments.firstWhere(
+                (p) => p['id'] == sub.paymentMethodId,
+
+                orElse: () => {'type': 'Unknown'},
+              )['type']
+              as String;
+
+      return SubscriptionFull(
+        subscription: sub,
+
+        categoryName: categoryName,
+
+        paymentMethodName: paymentName,
+      );
+    }).toList();
+  }
+
   // CANCELAR
 
   Future<void> cancelSubscription(int id) async {
