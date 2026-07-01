@@ -11,6 +11,7 @@ import '../core/subscription_status.dart';
 import 'add_subscription_screen.dart';
 import 'subscription_detail_screen.dart';
 import 'cancelled_subscription_screen.dart';
+import 'dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -212,6 +213,21 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSize: MainAxisSize.min,
 
         children: [
+          FloatingActionButton(
+            heroTag: "dashboard",
+
+            backgroundColor: Colors.blue,
+
+            child: const Icon(Icons.dashboard),
+
+            onPressed: () {
+              Navigator.push(
+                context,
+
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              );
+            },
+          ),
           FloatingActionButton(
             heroTag: "add_sub",
 
