@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 
 import 'providers/subscription_provider.dart';
 import 'providers/category_provider.dart';
@@ -12,7 +11,7 @@ import 'providers/payment_history_provider.dart';
 import 'providers/subscription_history_provider.dart';
 import 'providers/user_provider.dart';
 
-import 'package:flutter/material.dart';
+import 'providers/auth_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -27,7 +26,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()..loadUsers()),
+        // ChangeNotifierProvider(create: (_) => UserProvider()..loadUsers()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
 
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
 
@@ -38,6 +38,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PaymentHistoryProvider()),
 
         ChangeNotifierProvider(create: (_) => SubscriptionHistoryProvider()),
+
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
 
       child: const MyApp(),
@@ -65,20 +67,16 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
+    final authProvider = context.watch<AuthProvider>();
 
-    if (userProvider.isLoading) {
+    if (authProvider.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (userProvider.users.isEmpty) {
-      return const RegisterScreen();
+    if (authProvider.isLoggedIn) {
+      return const HomeScreen();
     }
 
-    if (userProvider.currentUser == null) {
-      return const LoginScreen();
-    }
-
-    return const HomeScreen();
+    return const LoginScreen();
   }
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/user.dart';
-import '../providers/user_provider.dart';
+import '../providers/auth_provider.dart';
 
 import 'login_screen.dart';
 
@@ -23,11 +22,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool isLoading = false;
 
   Future<void> _register() async {
-    if (nameController.text.trim().isEmpty ||
-        emailController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty) {
+    final name = nameController.text.trim();
+
+    final email = emailController.text.trim();
+
+    final password = passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Completa todos los campos")),
+      );
+
+      return;
+    }
+
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Ingresa un email válido")));
+
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("La contraseña debe tener mínimo 6 caracteres"),
+        ),
       );
 
       return;
@@ -37,34 +58,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isLoading = true;
     });
 
-    final user = UserModel(
-      name: nameController.text.trim(),
-
-      email: emailController.text.trim(),
-
-      password: passwordController.text.trim(),
-    );
-
     try {
-      await context.read<UserProvider>().addUser(user);
+      final success = await context.read<AuthProvider>().register(
+        name,
+        email,
+        password,
+      );
 
-      if (!mounted) {
-        return;
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Cuenta creada correctamente")),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.read<AuthProvider>().errorMessage ??
+                  "Revisa tu correo para confirmar la cuenta",
+            ),
+          ),
+        );
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Usuario creado correctamente")),
-      );
-
-      Navigator.pushReplacement(
-        context,
-
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error creando usuario: $e")));
     } finally {
       if (mounted) {
         setState(() {
@@ -100,6 +121,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             TextField(
               controller: emailController,
+
+              keyboardType: TextInputType.emailAddress,
 
               decoration: const InputDecoration(
                 labelText: "Email",

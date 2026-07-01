@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/user_provider.dart';
+import '../providers/auth_provider.dart';
 import 'home_screen.dart';
 
 import 'register_screen.dart';
@@ -25,9 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = true;
     });
 
-    final user = await context.read<UserProvider>().login(
+    final success = await context.read<AuthProvider>().login(
       emailController.text.trim(),
-
       passwordController.text.trim(),
     );
 
@@ -39,15 +38,16 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = false;
     });
 
-    if (user != null) {
-      Navigator.pushReplacement(
-        context,
-
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+    if (success) {
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email o contraseña incorrectos")),
+        SnackBar(
+          content: Text(
+            context.read<AuthProvider>().errorMessage ??
+                "Error al iniciar sesión",
+          ),
+        ),
       );
     }
   }
