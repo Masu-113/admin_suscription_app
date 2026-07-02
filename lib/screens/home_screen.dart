@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final user = context.read<UserProvider>().currentUser;
 
       if (user != null) {
-        context.read<SubscriptionProvider>().loadUserSubscriptions(user.id!);
+        context.read<SubscriptionProvider>().loadUserSubscriptions(user.id);
       }
 
       // Cargar todos los pagos en lugar de solo los del usuario

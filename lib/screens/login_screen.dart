@@ -28,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await context.read<AuthProvider>().login(
       emailController.text.trim(),
       passwordController.text.trim(),
+      context,
     );
 
     if (!mounted) {

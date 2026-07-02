@@ -25,7 +25,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       final user = context.read<UserProvider>().currentUser;
 
       if (user != null) {
-        context.read<PaymentMethodProvider>().loadUserMethods(user.id!);
+        context.read<PaymentMethodProvider>().loadUserMethods(user.id);
       }
     });
   }
