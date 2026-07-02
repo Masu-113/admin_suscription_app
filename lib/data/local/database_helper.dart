@@ -1,13 +1,13 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
-import 'migrations/migration_5.dart';
-import 'migrations/migration_6.dart';
-import 'migrations/migration_7.dart';
-import 'migrations/migration_8.dart';
-import 'migrations/migration_9.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
+  DatabaseHelper._();
+
+  static final DatabaseHelper _instance = DatabaseHelper._();
+
+  factory DatabaseHelper() => _instance;
+
   static Database? _database;
 
   Future<Database> get database async {
@@ -15,130 +15,109 @@ class DatabaseHelper {
       return _database!;
     }
 
-    _database = await openDatabase(
-      join(await getDatabasesPath(), 'subscriptions.db'),
+    _database = await _initDatabase();
 
-      version: 9,
+    return _database!;
+  }
 
+  Future<Database> _initDatabase() async {
+    final path = join(await getDatabasesPath(), 'subscriptions.db');
+
+    return await openDatabase(
+      path,
+      version: 1,
       onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE subscriptions(
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            service_name TEXT NOT NULL,
-
-            cost REAL NOT NULL,
-
-            start_date TEXT NOT NULL,
-
-            billing_cycle TEXT NOT NULL,
-
-            status TEXT NOT NULL,
-
-            category_id INTEGER,
-
-            payment_method_id INTEGER,
-
-            isCancelled INTEGER NOT NULL DEFAULT 0,
-
-            user_id TEXT
-
-          )
-        ''');
+        // ==========================
+        // USERS
+        // ==========================
 
         await db.execute('''
           CREATE TABLE users(
-
             id TEXT PRIMARY KEY,
-
             name TEXT NOT NULL,
-
             email TEXT NOT NULL UNIQUE
-
           )
         ''');
+
+        // ==========================
+        // CATEGORIES
+        // ==========================
 
         await db.execute('''
           CREATE TABLE categories(
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             name TEXT NOT NULL,
-
-            user_id TEXT
-
+            user_id TEXT NOT NULL
           )
         ''');
+
+        // ==========================
+        // PAYMENT METHODS
+        // ==========================
 
         await db.execute('''
           CREATE TABLE payment_methods(
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             type TEXT NOT NULL,
-
             details TEXT,
-
-            user_id TEXT
-
+            user_id TEXT NOT NULL
           )
         ''');
+
+        // ==========================
+        // SUBSCRIPTIONS
+        // ==========================
+
+        await db.execute('''
+          CREATE TABLE subscriptions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service_name TEXT NOT NULL,
+            cost REAL NOT NULL,
+            start_date TEXT NOT NULL,
+            billing_cycle TEXT NOT NULL,
+            status TEXT NOT NULL,
+            category_id INTEGER,
+            payment_method_id INTEGER,
+            isCancelled INTEGER NOT NULL DEFAULT 0,
+            user_id TEXT NOT NULL
+          )
+        ''');
+
+        // ==========================
+        // PAYMENT HISTORY
+        // ==========================
 
         await db.execute('''
           CREATE TABLE payment_history(
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             payment_date TEXT NOT NULL,
-
             amount REAL NOT NULL,
-
             subscription_id INTEGER NOT NULL,
-
             covered_until TEXT NOT NULL
-
           )
         ''');
+
+        // ==========================
+        // SUBSCRIPTION HISTORY
+        // ==========================
 
         await db.execute('''
           CREATE TABLE subscription_history(
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             subscription_id INTEGER NOT NULL,
-
             action TEXT NOT NULL,
-
             action_date TEXT NOT NULL
-
           )
         ''');
       },
-
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 5) {
-          await Migration5.run(db);
-        }
-
-        if (oldVersion < 6) {
-          await Migration6.run(db);
-        }
-
-        if (oldVersion < 7) {
-          await Migration7.run(db);
-        }
-
-        if (oldVersion < 8) {
-          await Migration8.run(db);
-        }
-
-        if (oldVersion < 9) {
-          await Migration9.run(db);
-        }
-      },
     );
+  }
 
-    return _database!;
+  Future<void> deleteDatabaseFile() async {
+    final path = join(await getDatabasesPath(), 'subscriptions.db');
+
+    await deleteDatabase(path);
+
+    _database = null;
   }
 }

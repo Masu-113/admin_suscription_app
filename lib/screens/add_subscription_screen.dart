@@ -10,7 +10,7 @@ import '../providers/payment_method_provider.dart';
 import '../models/payment_history.dart';
 import '../providers/payment_history_provider.dart';
 
-import '../providers/user_provider.dart';
+import '../core/session_manager.dart';
 
 class AddSubscriptionScreen extends StatefulWidget {
   final Subscription? subscription;
@@ -69,6 +69,14 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       selectedCycle = sub.billingCycle;
     } else {
       selectedStartDate = DateTime.now();
+    }
+    final userId = SessionManager.instance.userId;
+
+    if (userId != null) {
+      Future.microtask(() {
+        context.read<CategoryProvider>().loadUserCategories(userId);
+        context.read<PaymentMethodProvider>().loadUserMethods(userId);
+      });
     }
   }
 
@@ -133,13 +141,12 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       return;
     }
 
-    final currentUser = context.read<UserProvider>().currentUser;
+    final currentUser = SessionManager.instance.currentUser;
 
     if (currentUser == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("No hay usuario activo")));
-
       return;
     }
 
@@ -172,7 +179,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
     // CREAR
     else {
       final id = await subscriptionProvider.addSubscription(subscription);
-
+      if (!mounted) return;
       // Preguntar primer pago
       final registerPayment = await showDialog<bool>(
         // ignore: use_build_context_synchronously

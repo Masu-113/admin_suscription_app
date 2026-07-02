@@ -3,16 +3,16 @@ import 'package:admin_suscription_app/screens/payment_method_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/session_manager.dart';
+import '../core/subscription_status.dart';
+
 import '../providers/subscription_provider.dart';
 import '../providers/payment_history_provider.dart';
-import '../core/subscription_status.dart';
 
 import 'add_subscription_screen.dart';
 import 'subscription_detail_screen.dart';
 import 'cancelled_subscription_screen.dart';
 import 'dashboard_screen.dart';
-
-import '../providers/user_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,15 +26,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      final user = context.read<UserProvider>().currentUser;
+    final session = SessionManager.instance;
+
+    debugPrint("========== HOME ==========");
+    debugPrint("Session hash: ${session.hashCode}");
+    debugPrint("Current user: ${session.currentUser?.email}");
+
+    Future.microtask(() async {
+      final user = SessionManager.instance.currentUser;
 
       if (user != null) {
-        context.read<SubscriptionProvider>().loadUserSubscriptions(user.id);
+        await context.read<SubscriptionProvider>().loadUserSubscriptions(
+          user.id,
+        );
       }
 
-      // Cargar todos los pagos en lugar de solo los del usuario
-      context.read<PaymentHistoryProvider>().loadPayments();
+      await context.read<PaymentHistoryProvider>().loadPayments();
     });
   }
 
@@ -81,14 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(this.context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Suscripción cancelada correctamente.")),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final subscriptionProvider = Provider.of<SubscriptionProvider>(context);
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text("Mis Suscripciones")),
@@ -112,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
               final sub = activeSubscriptions[index];
               final subscription = sub.subscription;
 
-              // Obtener el último pago sin filtrar por usuario
               final lastPayment = paymentProvider.getLastPaymentForSubscription(
                 subscription.id!,
               );
@@ -125,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: ListTile(
+                  leading: const Icon(Icons.subscriptions),
                   title: Text(subscription.serviceName),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,7 +157,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   },
-                  leading: const Icon(Icons.subscriptions),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -201,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          const SizedBox(height: 10),
           FloatingActionButton(
             heroTag: "add_sub",
             child: const Icon(Icons.add),
@@ -237,6 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          const SizedBox(height: 10),
           FloatingActionButton(
             heroTag: "cancelled",
             backgroundColor: Colors.red,

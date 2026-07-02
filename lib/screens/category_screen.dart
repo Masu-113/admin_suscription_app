@@ -34,7 +34,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
 
     final user = context.read<UserProvider>().currentUser;
-
+    print("User: $user");
     if (user == null) {
       return;
     }

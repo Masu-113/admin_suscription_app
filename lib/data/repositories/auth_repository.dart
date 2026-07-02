@@ -7,16 +7,12 @@ class AuthRepository {
 
   Future<AuthResponse> register({
     required String name,
-
     required String email,
-
     required String password,
-  }) async {
-    return await _client.auth.signUp(
+  }) {
+    return _client.auth.signUp(
       email: email,
-
       password: password,
-
       data: {'name': name},
     );
   }
@@ -25,31 +21,22 @@ class AuthRepository {
 
   Future<AuthResponse> login({
     required String email,
-
     required String password,
-  }) async {
-    return await _client.auth.signInWithPassword(
-      email: email,
-
-      password: password,
-    );
+  }) {
+    return _client.auth.signInWithPassword(email: email, password: password);
   }
 
   // LOGOUT
 
-  Future<void> logout() async {
-    await _client.auth.signOut();
+  Future<void> logout() {
+    return _client.auth.signOut();
   }
 
-  // SESION ACTUAL
+  // SESIÓN ACTUAL
 
-  Session? get currentSession {
-    return _client.auth.currentSession;
-  }
+  Session? get currentSession => _client.auth.currentSession;
 
   // USUARIO ACTUAL
 
-  User? get currentUser {
-    return _client.auth.currentUser;
-  }
+  User? get currentUser => _client.auth.currentUser;
 }

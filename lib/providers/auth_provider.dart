@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/session_manager.dart';
 import '../data/repositories/auth_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -9,28 +10,31 @@ class AuthProvider extends ChangeNotifier {
 
   String? errorMessage;
 
-  bool get isLoggedIn {
-    return _repo.currentSession != null;
-  }
+  bool get isLoggedIn => _repo.currentSession != null;
 
   Future<bool> login(String email, String password) async {
     try {
       isLoading = true;
-
       errorMessage = null;
-
       notifyListeners();
 
       await _repo.login(email: email, password: password);
 
-      return true;
+      // Sincroniza el usuario autenticado con SQLite
+      await SessionManager.instance.initialize();
+
+      debugPrint("========== LOGIN ==========");
+      debugPrint(
+        "Usuario actual: ${SessionManager.instance.currentUser?.email}",
+      );
+      debugPrint("ID: ${SessionManager.instance.userId}");
+
+      return SessionManager.instance.isLoggedIn;
     } catch (e) {
       errorMessage = e.toString();
-
       return false;
     } finally {
       isLoading = false;
-
       notifyListeners();
     }
   }
@@ -38,9 +42,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(String name, String email, String password) async {
     try {
       isLoading = true;
-
       errorMessage = null;
-
       notifyListeners();
 
       final response = await _repo.register(
@@ -49,11 +51,9 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
-      // Usuario creado pero esperando confirmación por correo
-
       if (response.user != null && response.session == null) {
         errorMessage =
-            "Cuenta creada. Revisa tu correo para confirmar la cuenta.";
+            "Cuenta creada correctamente. Revisa tu correo electrónico y confirma tu cuenta antes de iniciar sesión.";
 
         return false;
       }
@@ -61,17 +61,15 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       errorMessage = e.toString();
-
       return false;
     } finally {
       isLoading = false;
-
       notifyListeners();
     }
   }
 
   Future<void> logout() async {
-    await _repo.logout();
+    await SessionManager.instance.logout();
 
     notifyListeners();
   }

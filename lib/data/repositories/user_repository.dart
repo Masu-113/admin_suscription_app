@@ -1,15 +1,21 @@
+import 'package:sqflite/sqflite.dart';
+
 import '../local/database_helper.dart';
 import '../../models/user.dart';
 
 class UserRepository {
-  final dbHelper = DatabaseHelper();
+  final DatabaseHelper dbHelper = DatabaseHelper();
 
-  // CREAR USUARIO
+  // GUARDAR USUARIO (INSERT O UPDATE)
 
-  Future<void> insertUser(UserModel user) async {
+  Future<void> saveUser(UserModel user) async {
     final db = await dbHelper.database;
 
-    await db.insert('users', user.toMap());
+    await db.insert(
+      'users',
+      user.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   // OBTENER TODOS LOS USUARIOS
@@ -29,11 +35,8 @@ class UserRepository {
 
     final result = await db.query(
       'users',
-
       where: 'id = ?',
-
       whereArgs: [id],
-
       limit: 1,
     );
 
@@ -51,11 +54,8 @@ class UserRepository {
 
     final result = await db.query(
       'users',
-
       where: 'email = ?',
-
       whereArgs: [email],
-
       limit: 1,
     );
 
@@ -73,11 +73,8 @@ class UserRepository {
 
     await db.update(
       'users',
-
       user.toMap(),
-
       where: 'id = ?',
-
       whereArgs: [user.id],
     );
   }

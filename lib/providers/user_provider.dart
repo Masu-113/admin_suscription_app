@@ -33,7 +33,7 @@ class UserProvider extends ChangeNotifier {
   // GUARDAR USUARIO LOCAL (CACHE)
 
   Future<void> saveUser(UserModel user) async {
-    await _repo.insertUser(user);
+    await _repo.saveUser(user);
 
     currentUser = user;
 
@@ -46,6 +46,12 @@ class UserProvider extends ChangeNotifier {
 
   Future<UserModel?> getUserByEmail(String email) async {
     return await _repo.getUserByEmail(email);
+  }
+
+  // BUSCAR USUARIO POR ID
+
+  Future<UserModel?> getUserById(String id) async {
+    return await _repo.getUserById(id);
   }
 
   // ACTUALIZAR USUARIO
@@ -70,6 +76,14 @@ class UserProvider extends ChangeNotifier {
     }
 
     await loadUsers();
+
+    notifyListeners();
+  }
+
+  // ESTABLECER USUARIO ACTUAL
+
+  void setCurrentUser(UserModel? user) {
+    currentUser = user;
 
     notifyListeners();
   }

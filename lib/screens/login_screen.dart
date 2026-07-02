@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
-// import 'home_screen.dart';
-
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,7 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await context.read<AuthProvider>().login(
       emailController.text.trim(),
       passwordController.text.trim(),
-      context,
     );
 
     if (!mounted) {
@@ -104,11 +101,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     : const Text("Ingresar"),
               ),
             ),
+
             TextButton(
               onPressed: () {
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(builder: (_) => const RegisterScreen()),
                 );
               },
