@@ -23,7 +23,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       final user = context.read<UserProvider>().currentUser;
 
       if (user != null) {
-        context.read<CategoryProvider>().loadUserCategories(user.id!);
+        context.read<CategoryProvider>().loadUserCategories(user.id);
       }
     });
   }
