@@ -12,7 +12,7 @@ class UserProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
-  // CARGAR USUARIOS
+  // CARGAR USUARIOS LOCALES
 
   Future<void> loadUsers() async {
     try {
@@ -30,57 +30,55 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  // CREAR USUARIO
+  // GUARDAR USUARIO LOCAL (CACHE)
 
-  Future<int> addUser(UserModel user) async {
-    final id = await _repo.insertUser(user);
+  Future<void> saveUser(UserModel user) async {
+    await _repo.insertUser(user);
+
+    currentUser = user;
 
     await loadUsers();
 
-    return id;
+    notifyListeners();
   }
 
   // BUSCAR USUARIO POR EMAIL
 
-  Future<UserModel?> login(String email, String password) async {
-    final user = await _repo.getUserByEmail(email);
-
-    if (user == null) {
-      return null;
-    }
-
-    if (user.password != password) {
-      return null;
-    }
-
-    currentUser = user;
-
-    notifyListeners();
-
-    return user;
+  Future<UserModel?> getUserByEmail(String email) async {
+    return await _repo.getUserByEmail(email);
   }
 
-  // CERRAR SESION
-
-  void logout() {
-    currentUser = null;
-
-    notifyListeners();
-  }
-
-  // ACTUALIZAR
+  // ACTUALIZAR USUARIO
 
   Future<void> updateUser(UserModel user) async {
     await _repo.updateUser(user);
 
+    currentUser = user;
+
     await loadUsers();
+
+    notifyListeners();
   }
 
-  // ELIMINAR
+  // ELIMINAR USUARIO
 
-  Future<void> deleteUser(int id) async {
+  Future<void> deleteUser(String id) async {
     await _repo.deleteUser(id);
 
+    if (currentUser?.id == id) {
+      currentUser = null;
+    }
+
     await loadUsers();
+
+    notifyListeners();
+  }
+
+  // CERRAR USUARIO LOCAL
+
+  void clearUser() {
+    currentUser = null;
+
+    notifyListeners();
   }
 }

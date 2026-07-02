@@ -19,13 +19,15 @@ class PaymentMethodRepository {
         type: map['type'] as String,
 
         details: map['details'] as String?,
+
+        userId: map['user_id'] as String?,
       );
     }).toList();
   }
 
   // OBTENER POR USUARIO
 
-  Future<List<PaymentMethod>> getPaymentMethodsByUser(int userId) async {
+  Future<List<PaymentMethod>> getPaymentMethodsByUser(String userId) async {
     final db = await dbHelper.database;
 
     final result = await db.query(
@@ -44,7 +46,7 @@ class PaymentMethodRepository {
 
         details: map['details'] as String?,
 
-        userId: map['user_id'] as int?,
+        userId: map['user_id'] as String?,
       );
     }).toList();
   }

@@ -3,7 +3,7 @@ class Category {
 
   final String name;
 
-  final int? userId;
+  final String? userId;
 
   Category({this.id, required this.name, this.userId});
 
@@ -17,7 +17,7 @@ class Category {
 
       name: map['name'] as String,
 
-      userId: map['user_id'] as int?,
+      userId: map['user_id'] as String?,
     );
   }
 }

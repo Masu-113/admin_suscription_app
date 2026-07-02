@@ -6,12 +6,10 @@ class UserRepository {
 
   // CREAR USUARIO
 
-  Future<int> insertUser(UserModel user) async {
+  Future<void> insertUser(UserModel user) async {
     final db = await dbHelper.database;
 
-    final id = await db.insert('users', user.toMap());
-
-    return id;
+    await db.insert('users', user.toMap());
   }
 
   // OBTENER TODOS LOS USUARIOS
@@ -26,7 +24,7 @@ class UserRepository {
 
   // OBTENER USUARIO POR ID
 
-  Future<UserModel?> getUserById(int id) async {
+  Future<UserModel?> getUserById(String id) async {
     final db = await dbHelper.database;
 
     final result = await db.query(
@@ -86,7 +84,7 @@ class UserRepository {
 
   // ELIMINAR USUARIO
 
-  Future<void> deleteUser(int id) async {
+  Future<void> deleteUser(String id) async {
     final db = await dbHelper.database;
 
     await db.delete('users', where: 'id = ?', whereArgs: [id]);

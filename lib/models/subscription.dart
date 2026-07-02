@@ -19,7 +19,7 @@ class Subscription {
 
   final int? paymentMethodId;
 
-  final int? userId;
+  final String? userId;
 
   Subscription({
     this.id,
@@ -63,7 +63,7 @@ class Subscription {
 
       'payment_method_id': paymentMethodId,
 
-      'user_id': userId,
+      'user_id': userId, // UUID ahora
     };
   }
 
@@ -91,7 +91,7 @@ class Subscription {
 
       paymentMethodId: map['payment_method_id'] as int?,
 
-      userId: map['user_id'] as int?,
+      userId: map['user_id'] as String?,
     );
   }
 }

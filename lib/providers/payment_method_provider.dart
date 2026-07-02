@@ -10,7 +10,7 @@ class PaymentMethodProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
-  int? currentUserId;
+  String? currentUserId;
 
   // TODOS LOS METODOS
   // futuro uso admin
@@ -33,11 +33,11 @@ class PaymentMethodProvider extends ChangeNotifier {
 
   // METODOS DEL USUARIO
 
-  Future<void> loadUserMethods(int userId) async {
+  Future<void> loadUserMethods(String userId) async {
     try {
-      currentUserId = userId;
-
       isLoading = true;
+
+      currentUserId = userId;
 
       notifyListeners();
 
@@ -54,6 +54,10 @@ class PaymentMethodProvider extends ChangeNotifier {
   // ADD
 
   Future<void> addMethod(PaymentMethod method) async {
+    if (method.userId == null) {
+      throw Exception("No se puede crear método sin usuario");
+    }
+
     await _repo.insertPaymentMethod(method);
 
     if (currentUserId != null) {

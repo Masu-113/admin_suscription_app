@@ -5,6 +5,7 @@ import 'migrations/migration_5.dart';
 import 'migrations/migration_6.dart';
 import 'migrations/migration_7.dart';
 import 'migrations/migration_8.dart';
+import 'migrations/migration_9.dart';
 
 class DatabaseHelper {
   static Database? _database;
@@ -17,7 +18,7 @@ class DatabaseHelper {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'subscriptions.db'),
 
-      version: 8,
+      version: 9,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -41,7 +42,7 @@ class DatabaseHelper {
 
             isCancelled INTEGER NOT NULL DEFAULT 0,
 
-            user_id INTEGER
+            user_id TEXT
 
           )
         ''');
@@ -49,13 +50,11 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE users(
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT PRIMARY KEY,
 
             name TEXT NOT NULL,
 
-            email TEXT NOT NULL UNIQUE,
-
-            password TEXT NOT NULL
+            email TEXT NOT NULL UNIQUE
 
           )
         ''');
@@ -63,11 +62,11 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE categories(
 
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-          name TEXT NOT NULL,
+            name TEXT NOT NULL,
 
-          user_id INTEGER
+            user_id TEXT
 
           )
         ''');
@@ -75,13 +74,13 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE payment_methods(
 
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-          type TEXT NOT NULL,
+            type TEXT NOT NULL,
 
-          details TEXT,
+            details TEXT,
 
-          user_id INTEGER
+            user_id TEXT
 
           )
         ''');
@@ -132,6 +131,10 @@ class DatabaseHelper {
 
         if (oldVersion < 8) {
           await Migration8.run(db);
+        }
+
+        if (oldVersion < 9) {
+          await Migration9.run(db);
         }
       },
     );

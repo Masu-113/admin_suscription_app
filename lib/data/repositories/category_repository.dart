@@ -4,8 +4,7 @@ import '../../models/category.dart';
 class CategoryRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  // TODAS LAS CATEGORIAS
-  // (uso futuro/admin)
+  // TODAS (ADMIN / DEBUG)
 
   Future<List<Category>> getCategories() async {
     final db = await _dbHelper.database;
@@ -15,9 +14,9 @@ class CategoryRepository {
     return result.map((e) => Category.fromMap(e)).toList();
   }
 
-  // CATEGORIAS POR USUARIO
+  // POR USUARIO
 
-  Future<List<Category>> getCategoriesByUser(int userId) async {
+  Future<List<Category>> getCategoriesByUser(String userId) async {
     final db = await _dbHelper.database;
 
     final result = await db.query(

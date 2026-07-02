@@ -11,10 +11,9 @@ class SubscriptionProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
-  int? currentUserId;
+  String? currentUserId;
 
-  // LOAD TODAS
-  // (futuro uso administrativo)
+  // LOAD TODAS (ADMIN / DEBUG)
 
   Future<void> loadSubscriptions() async {
     try {
@@ -34,7 +33,7 @@ class SubscriptionProvider extends ChangeNotifier {
 
   // LOAD POR USUARIO
 
-  Future<void> loadUserSubscriptions(int userId) async {
+  Future<void> loadUserSubscriptions(String userId) async {
     try {
       isLoading = true;
 
@@ -44,7 +43,7 @@ class SubscriptionProvider extends ChangeNotifier {
 
       subscriptions = await _repo.getSubscriptionsFullByUser(userId);
     } catch (e) {
-      debugPrint("Error loading subscriptions: $e");
+      debugPrint("Error loading user subscriptions: $e");
     } finally {
       isLoading = false;
 
@@ -81,7 +80,9 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> restoreSubscription(int id) async {
     await _repo.restoreSubscription(id);
 
-    await loadSubscriptions();
+    if (currentUserId != null) {
+      await loadUserSubscriptions(currentUserId!);
+    }
   }
 
   // UPDATE
@@ -89,6 +90,8 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> updateSubscription(Subscription sub) async {
     await _repo.updateSubscription(sub);
 
-    await loadSubscriptions();
+    if (currentUserId != null) {
+      await loadUserSubscriptions(currentUserId!);
+    }
   }
 }

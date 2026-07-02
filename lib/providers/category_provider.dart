@@ -10,7 +10,7 @@ class CategoryProvider extends ChangeNotifier {
 
   bool isLoading = false;
 
-  int? currentUserId;
+  String? currentUserId;
 
   // TODAS LAS CATEGORIAS
   // futuro uso admin
@@ -33,11 +33,11 @@ class CategoryProvider extends ChangeNotifier {
 
   // CATEGORIAS DEL USUARIO
 
-  Future<void> loadUserCategories(int userId) async {
+  Future<void> loadUserCategories(String userId) async {
     try {
-      currentUserId = userId;
-
       isLoading = true;
+
+      currentUserId = userId;
 
       notifyListeners();
 
@@ -54,6 +54,10 @@ class CategoryProvider extends ChangeNotifier {
   // ADD
 
   Future<void> addCategory(Category category) async {
+    if (category.userId == null) {
+      throw Exception("No se puede crear categoría sin usuario");
+    }
+
     await _repo.insertCategory(category);
 
     if (currentUserId != null) {

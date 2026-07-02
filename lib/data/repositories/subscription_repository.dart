@@ -33,7 +33,7 @@ class SubscriptionRepository {
     return id;
   }
 
-  // OBTENER BÁSICAS
+  // OBTENER TODAS (GLOBAL LOCAL)
 
   Future<List<Subscription>> getSubscriptions() async {
     final db = await dbHelper.database;
@@ -64,12 +64,54 @@ class SubscriptionRepository {
 
         paymentMethodId: map['payment_method_id'] as int?,
 
-        userId: map['user_id'] as int?,
+        userId: map['user_id'] as String?,
       );
     }).toList();
   }
 
-  // FULL
+  // 🔥 OBTENER POR USUARIO (CORRECTO)
+
+  Future<List<Subscription>> getSubscriptionsByUser(String userId) async {
+    final db = await dbHelper.database;
+
+    final result = await db.query(
+      'subscriptions',
+
+      where: 'user_id = ?',
+
+      whereArgs: [userId],
+    );
+
+    return result.map((map) {
+      return Subscription(
+        id: map['id'] as int?,
+
+        serviceName: (map['service_name'] ?? '') as String,
+
+        cost: (map['cost'] as num).toDouble(),
+
+        startDate: DateTime.parse(map['start_date'] as String),
+
+        billingCycle: BillingCycle.values.firstWhere(
+          (e) => e.name == map['billing_cycle'],
+
+          orElse: () => BillingCycle.monthly,
+        ),
+
+        status: (map['status'] ?? 'Active') as String,
+
+        isCancelled: map['isCancelled'] == 1,
+
+        categoryId: map['category_id'] as int?,
+
+        paymentMethodId: map['payment_method_id'] as int?,
+
+        userId: map['user_id'] as String?,
+      );
+    }).toList();
+  }
+
+  // FULL GENERAL
 
   Future<List<SubscriptionFull>> getSubscriptionsFull() async {
     final db = await dbHelper.database;
@@ -104,7 +146,7 @@ class SubscriptionRepository {
 
         paymentMethodId: s['payment_method_id'] as int?,
 
-        userId: s['user_id'] as int?,
+        userId: s['user_id'] as String?,
       );
 
       final categoryName =
@@ -133,9 +175,11 @@ class SubscriptionRepository {
     }).toList();
   }
 
-  // FULL POR USUARIO
+  // FULL POR USUARIO (CORREGIDO)
 
-  Future<List<SubscriptionFull>> getSubscriptionsFullByUser(int userId) async {
+  Future<List<SubscriptionFull>> getSubscriptionsFullByUser(
+    String userId,
+  ) async {
     final db = await dbHelper.database;
 
     final subs = await db.query(
@@ -174,7 +218,7 @@ class SubscriptionRepository {
 
         paymentMethodId: s['payment_method_id'] as int?,
 
-        userId: s['user_id'] as int?,
+        userId: s['user_id'] as String?,
       );
 
       final categoryName =

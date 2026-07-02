@@ -5,7 +5,7 @@ class PaymentMethod {
 
   final String? details;
 
-  final int? userId;
+  final String? userId;
 
   PaymentMethod({this.id, required this.type, this.details, this.userId});
 
@@ -21,7 +21,7 @@ class PaymentMethod {
 
       details: map['details'] as String?,
 
-      userId: map['user_id'] as int?,
+      userId: map['user_id'] as String?,
     );
   }
 }
