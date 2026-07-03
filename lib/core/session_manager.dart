@@ -5,6 +5,9 @@ import '../data/repositories/supabase_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../models/user.dart';
 
+//Sincronización de datos entre SQLite y Supabase
+import '../services/sync_service.dart';
+
 class SessionManager extends ChangeNotifier {
   SessionManager._();
 
@@ -79,7 +82,13 @@ class SessionManager extends ChangeNotifier {
       }
 
       _currentUser = localUser;
-
+      // Sincronizar datos entre SQLite y Supabase
+      await SyncService.instance.syncAll(userId);
+      if (kDebugMode) {
+        debugPrint(
+          "Sincronización completa para el usuario: ${_currentUser?.email}",
+        );
+      }
       debugPrint("Usuario actual: ${_currentUser?.email}");
       debugPrint("UUID actual: ${_currentUser?.id}");
     } catch (e, s) {

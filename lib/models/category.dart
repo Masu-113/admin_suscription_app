@@ -1,20 +1,22 @@
 class Category {
   final int? id;
 
+  final int? cloudId;
+
   final String name;
 
   final String? userId;
 
-  Category({this.id, required this.name, this.userId});
+  Category({this.id, this.cloudId, required this.name, this.userId});
 
   Map<String, dynamic> toMap() {
-    return {'id': id, 'name': name, 'user_id': userId};
+    return {'id': id, 'cloud_id': cloudId, 'name': name, 'user_id': userId};
   }
 
   factory Category.fromMap(Map<String, dynamic> map) {
     return Category(
       id: map['id'] as int?,
-
+      cloudId: map['cloud_id'] as int?,
       name: map['name'] as String,
 
       userId: map['user_id'] as String?,

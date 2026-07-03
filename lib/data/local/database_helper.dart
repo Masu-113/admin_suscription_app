@@ -46,6 +46,7 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE categories(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cloud_id INTEGER,
             name TEXT NOT NULL,
             user_id TEXT NOT NULL
           )

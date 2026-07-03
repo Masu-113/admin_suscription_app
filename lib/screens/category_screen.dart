@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/session_manager.dart';
 import '../models/category.dart';
 import '../providers/category_provider.dart';
-import '../providers/user_provider.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -20,7 +20,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     super.initState();
 
     Future.microtask(() {
-      final user = context.read<UserProvider>().currentUser;
+      final user = SessionManager.instance.currentUser;
 
       if (user != null) {
         context.read<CategoryProvider>().loadUserCategories(user.id);
@@ -29,18 +29,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Future<void> add() async {
-    if (controller.text.trim().isEmpty) {
-      return;
-    }
+    final name = controller.text.trim();
 
-    final user = context.read<UserProvider>().currentUser;
-    print("User: $user");
+    if (name.isEmpty) return;
+
+    final user = SessionManager.instance.currentUser;
+
     if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No hay un usuario autenticado")),
+      );
       return;
     }
 
     await context.read<CategoryProvider>().addCategory(
-      Category(name: controller.text.trim(), userId: user.id),
+      Category(name: name, userId: user.id),
     );
 
     controller.clear();
@@ -49,7 +52,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   void dispose() {
     controller.dispose();
-
     super.dispose();
   }
 
@@ -57,31 +59,33 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Categories")),
-
       body: Consumer<CategoryProvider>(
         builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
           return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(12),
-
                 child: TextField(
                   controller: controller,
-
                   decoration: const InputDecoration(labelText: "New Category"),
                 ),
               ),
 
               ElevatedButton(onPressed: add, child: const Text("Add")),
 
+              const SizedBox(height: 10),
+
               Expanded(
                 child: ListView.builder(
                   itemCount: provider.categories.length,
-
                   itemBuilder: (context, index) {
-                    final c = provider.categories[index];
+                    final category = provider.categories[index];
 
-                    return ListTile(title: Text(c.name));
+                    return ListTile(title: Text(category.name));
                   },
                 ),
               ),

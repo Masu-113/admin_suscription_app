@@ -1,93 +1,83 @@
 import 'package:flutter/material.dart';
-
 import '../data/repositories/category_repository.dart';
 import '../models/category.dart';
 
 class CategoryProvider extends ChangeNotifier {
   final CategoryRepository _repo = CategoryRepository();
-
   List<Category> categories = [];
-
   bool isLoading = false;
-
   String? currentUserId;
 
-  // TODAS LAS CATEGORIAS
-  // futuro uso admin
-
-  Future<void> loadCategories() async {
-    try {
-      isLoading = true;
-
-      notifyListeners();
-
-      categories = await _repo.getCategories();
-    } catch (e) {
-      debugPrint("Error loading categories: $e");
-    } finally {
-      isLoading = false;
-
-      notifyListeners();
-    }
-  }
-
-  // CATEGORIAS DEL USUARIO
+  // LOAD USER CATEGORIES
 
   Future<void> loadUserCategories(String userId) async {
     try {
       isLoading = true;
-
       currentUserId = userId;
-
       notifyListeners();
-
       categories = await _repo.getCategoriesByUser(userId);
     } catch (e) {
-      debugPrint("Error loading user categories: $e");
+      debugPrint("Error loading categories: $e");
     } finally {
       isLoading = false;
-
       notifyListeners();
     }
   }
 
-  // ADD
+  // ADD CATEGORY
 
   Future<void> addCategory(Category category) async {
-    if (category.userId == null) {
-      throw Exception("No se puede crear categoría sin usuario");
-    }
-
-    await _repo.insertCategory(category);
-
-    if (currentUserId != null) {
-      await loadUserCategories(currentUserId!);
-    } else {
-      await loadCategories();
+    try {
+      isLoading = true;
+      notifyListeners();
+      await _repo.insertCategory(category);
+      if (currentUserId != null) {
+        await loadUserCategories(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error adding category: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
-  // UPDATE
+  // UPDATE CATEGORY
 
   Future<void> updateCategory(Category category) async {
-    await _repo.updateCategory(category);
-
-    if (currentUserId != null) {
-      await loadUserCategories(currentUserId!);
-    } else {
-      await loadCategories();
+    try {
+      isLoading = true;
+      notifyListeners();
+      await _repo.updateCategory(
+        cloudId: category.cloudId ?? 0,
+        name: category.name,
+      );
+      if (currentUserId != null) {
+        await loadUserCategories(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error updating category: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
-  // DELETE
+  // DELETE CATEGORY
 
-  Future<void> deleteCategory(int id) async {
-    await _repo.deleteCategory(id);
-
-    if (currentUserId != null) {
-      await loadUserCategories(currentUserId!);
-    } else {
-      await loadCategories();
+  Future<void> deleteCategory(Category category) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      await _repo.deleteCategory(category);
+      if (currentUserId != null) {
+        await loadUserCategories(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error deleting category: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 }
