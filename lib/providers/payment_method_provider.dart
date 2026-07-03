@@ -12,82 +12,96 @@ class PaymentMethodProvider extends ChangeNotifier {
 
   String? currentUserId;
 
-  // TODOS LOS METODOS
-  // futuro uso admin
-
-  Future<void> loadMethods() async {
-    try {
-      isLoading = true;
-
-      notifyListeners();
-
-      methods = await _repo.getPaymentMethods();
-    } catch (e) {
-      debugPrint("Error loading payment methods: $e");
-    } finally {
-      isLoading = false;
-
-      notifyListeners();
-    }
-  }
-
-  // METODOS DEL USUARIO
+  // ==========================
+  // LOAD USER METHODS
+  // ==========================
 
   Future<void> loadUserMethods(String userId) async {
     try {
       isLoading = true;
-
       currentUserId = userId;
-
       notifyListeners();
 
       methods = await _repo.getPaymentMethodsByUser(userId);
     } catch (e) {
-      debugPrint("Error loading user payment methods: $e");
+      debugPrint("Error loading payment methods: $e");
     } finally {
       isLoading = false;
-
       notifyListeners();
     }
   }
 
+  // ==========================
   // ADD
+  // ==========================
 
   Future<void> addMethod(PaymentMethod method) async {
     if (method.userId == null) {
       throw Exception("No se puede crear método sin usuario");
     }
 
-    await _repo.insertPaymentMethod(method);
+    try {
+      isLoading = true;
+      notifyListeners();
 
-    if (currentUserId != null) {
-      await loadUserMethods(currentUserId!);
-    } else {
-      await loadMethods();
+      await _repo.insertPaymentMethod(method);
+
+      if (currentUserId != null) {
+        await loadUserMethods(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error adding payment method: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
+  // ==========================
   // UPDATE
+  // ==========================
 
   Future<void> updateMethod(PaymentMethod method) async {
-    await _repo.updatePaymentMethod(method);
+    try {
+      isLoading = true;
+      notifyListeners();
 
-    if (currentUserId != null) {
-      await loadUserMethods(currentUserId!);
-    } else {
-      await loadMethods();
+      await _repo.updatePaymentMethod(
+        cloudId: method.cloudId!,
+        type: method.type,
+        details: method.details,
+      );
+
+      if (currentUserId != null) {
+        await loadUserMethods(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error updating payment method: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
+  // ==========================
   // DELETE
+  // ==========================
 
-  Future<void> deleteMethod(int id) async {
-    await _repo.deletePaymentMethod(id);
+  Future<void> deleteMethod(PaymentMethod method) async {
+    try {
+      isLoading = true;
+      notifyListeners();
 
-    if (currentUserId != null) {
-      await loadUserMethods(currentUserId!);
-    } else {
-      await loadMethods();
+      await _repo.deletePaymentMethod(method);
+
+      if (currentUserId != null) {
+        await loadUserMethods(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error deleting payment method: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 }

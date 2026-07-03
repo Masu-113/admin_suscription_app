@@ -1,6 +1,8 @@
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/supabase_repository.dart';
 import '../models/category.dart';
+import '../data/repositories/payment_method_repository.dart';
+import '../models/payment_method.dart';
 
 class SyncService {
   SyncService._();
@@ -9,9 +11,11 @@ class SyncService {
 
   final SupabaseRepository _cloud = SupabaseRepository();
   final CategoryRepository _categories = CategoryRepository();
+  final PaymentMethodRepository _paymentMethods = PaymentMethodRepository();
 
   Future<void> syncAll(String userId) async {
     await syncCategories(userId);
+    await syncPaymentMethods(userId);
 
     // Próximamente
     // await syncPaymentMethods(userId);
@@ -39,6 +43,30 @@ class SyncService {
         await _categories.insertLocal(category);
       } else {
         await _categories.updateLocal(category);
+      }
+    }
+  }
+
+  Future<void> syncPaymentMethods(String userId) async {
+    final cloudMethods = await _cloud.getPaymentMethods(userId);
+
+    for (final item in cloudMethods) {
+      final cloudId = item['id'] as int;
+
+      final local = await _paymentMethods.getPaymentMethodByCloudId(cloudId);
+
+      final method = PaymentMethod(
+        id: local?.id,
+        cloudId: cloudId,
+        type: item['type'] as String,
+        details: item['details'] as String?,
+        userId: item['user_id'] as String,
+      );
+
+      if (local == null) {
+        await _paymentMethods.insertLocal(method);
+      } else {
+        await _paymentMethods.updateLocal(method);
       }
     }
   }

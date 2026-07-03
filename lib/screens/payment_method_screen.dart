@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../models/payment_method.dart';
 import '../providers/payment_method_provider.dart';
-import '../providers/user_provider.dart';
+
+import '../core/session_manager.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   const PaymentMethodScreen({super.key});
@@ -22,7 +23,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     super.initState();
 
     Future.microtask(() {
-      final user = context.read<UserProvider>().currentUser;
+      final user = SessionManager.instance.currentUser;
 
       if (user != null) {
         context.read<PaymentMethodProvider>().loadUserMethods(user.id);
@@ -35,7 +36,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       return;
     }
 
-    final user = context.read<UserProvider>().currentUser;
+    final user = SessionManager.instance.currentUser;
 
     if (user == null) {
       return;
