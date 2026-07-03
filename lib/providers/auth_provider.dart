@@ -69,8 +69,16 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await SessionManager.instance.logout();
-
+    isLoading = true;
     notifyListeners();
+
+    try {
+      await SessionManager.instance.logout();
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 }

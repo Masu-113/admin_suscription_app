@@ -63,30 +63,27 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  late Future<void> _sessionFuture;
-
   @override
   void initState() {
     super.initState();
 
-    _sessionFuture = SessionManager.instance.initialize();
+    SessionManager.instance.initialize();
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+    return AnimatedBuilder(
+      animation: SessionManager.instance,
+      builder: (context, _) {
+        final session = SessionManager.instance;
 
-    return FutureBuilder<void>(
-      future: _sessionFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done ||
-            authProvider.isLoading) {
+        if (session.isInitializing) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        if (SessionManager.instance.isLoggedIn) {
+        if (session.isLoggedIn) {
           return const HomeScreen();
         }
 

@@ -28,17 +28,13 @@ class _LoginScreenState extends State<LoginScreen> {
       passwordController.text.trim(),
     );
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       isLoading = false;
     });
 
-    if (success) {
-      Navigator.pop(context);
-    } else {
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

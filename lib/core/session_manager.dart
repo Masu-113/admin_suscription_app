@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/repositories/supabase_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../models/user.dart';
 
@@ -10,8 +11,11 @@ class SessionManager extends ChangeNotifier {
   static final SessionManager instance = SessionManager._();
 
   final UserRepository _userRepository = UserRepository();
+  final SupabaseRepository _supabaseRepository = SupabaseRepository();
 
   UserModel? _currentUser;
+
+  bool _isInitializing = false;
 
   UserModel? get currentUser => _currentUser;
 
@@ -19,51 +23,75 @@ class SessionManager extends ChangeNotifier {
 
   bool get isLoggedIn => _currentUser != null;
 
+  bool get isInitializing => _isInitializing;
+
   Future<void> initialize() async {
-    debugPrint("========== SESSION MANAGER ==========");
+    if (_isInitializing) return;
 
-    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    _isInitializing = true;
+    notifyListeners();
 
-    if (supabaseUser == null) {
-      debugPrint("No existe sesión en Supabase.");
+    try {
+      debugPrint("========== SESSION MANAGER ==========");
 
-      _currentUser = null;
+      final supabaseUser = Supabase.instance.client.auth.currentUser;
 
-      notifyListeners();
+      if (supabaseUser == null) {
+        debugPrint("No existe sesión en Supabase.");
 
-      return;
-    }
+        _currentUser = null;
 
-    debugPrint("Supabase User: ${supabaseUser.email}");
-    debugPrint("UUID: ${supabaseUser.id}");
+        return;
+      }
 
-    UserModel? localUser = await _userRepository.getUserById(supabaseUser.id);
+      debugPrint("Supabase User: ${supabaseUser.email}");
+      debugPrint("UUID: ${supabaseUser.id}");
 
-    if (localUser == null) {
-      debugPrint("Usuario NO existe en SQLite. Creándolo...");
+      final userId = supabaseUser.id;
 
-      await _userRepository.saveUser(
-        UserModel(
-          id: supabaseUser.id,
-          name:
-              supabaseUser.userMetadata?['name'] ??
-              supabaseUser.email?.split('@').first ??
-              "Usuario",
-          email: supabaseUser.email!,
-        ),
+      final name =
+          supabaseUser.userMetadata?['name'] ??
+          supabaseUser.email?.split('@').first ??
+          "Usuario";
+
+      final email = supabaseUser.email!;
+
+      // Sincronizar usuario con Supabase
+      await _supabaseRepository.upsertUser(
+        id: userId,
+        name: name,
+        email: email,
       );
 
-      localUser = await _userRepository.getUserById(supabaseUser.id);
-    } else {
-      debugPrint("Usuario encontrado en SQLite.");
+      // Sincronizar usuario con SQLite
+      UserModel? localUser = await _userRepository.getUserById(userId);
+
+      if (localUser == null) {
+        debugPrint("Usuario NO existe en SQLite. Creándolo...");
+
+        await _userRepository.saveUser(
+          UserModel(id: userId, name: name, email: email),
+        );
+
+        localUser = await _userRepository.getUserById(userId);
+      } else {
+        debugPrint("Usuario encontrado en SQLite.");
+      }
+
+      _currentUser = localUser;
+
+      debugPrint("Usuario actual: ${_currentUser?.email}");
+      debugPrint("UUID actual: ${_currentUser?.id}");
+    } catch (e, s) {
+      debugPrint("Error inicializando sesión:");
+      debugPrint(e.toString());
+      debugPrint(s.toString());
+
+      _currentUser = null;
+    } finally {
+      _isInitializing = false;
+      notifyListeners();
     }
-
-    _currentUser = localUser;
-
-    debugPrint("Usuario actual: ${_currentUser?.email}");
-    debugPrint("UUID actual: ${_currentUser?.id}");
-
-    notifyListeners();
   }
 
   Future<void> logout() async {
