@@ -84,6 +84,27 @@ class CategoryRepository {
   }
 
   // ==========================
+  // BUSCAR POR ID LOCAL
+  // ==========================
+
+  Future<Category?> getCategoryByLocalId(int localId) async {
+    final db = await _dbHelper.database;
+
+    final result = await db.query(
+      'categories',
+      where: 'id = ?',
+      whereArgs: [localId],
+      limit: 1,
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return Category.fromMap(result.first);
+  }
+
+  // ==========================
   // BUSCAR POR CLOUD ID
   // ==========================
 

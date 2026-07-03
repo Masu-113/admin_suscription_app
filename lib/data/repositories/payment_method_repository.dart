@@ -88,6 +88,27 @@ class PaymentMethodRepository {
   }
 
   // ==========================
+  // BUSCAR POR ID LOCAL
+  // ==========================
+
+  Future<PaymentMethod?> getPaymentMethodByLocalId(int localId) async {
+    final db = await _dbHelper.database;
+
+    final result = await db.query(
+      'payment_methods',
+      where: 'id = ?',
+      whereArgs: [localId],
+      limit: 1,
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return PaymentMethod.fromMap(result.first);
+  }
+
+  // ==========================
   // BUSCAR POR CLOUD ID
   // ==========================
 
