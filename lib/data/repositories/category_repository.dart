@@ -68,7 +68,14 @@ class CategoryRepository {
     required String name,
   }) async {
     await _supabase.updateCategory(id: cloudId, name: name);
+
+    final category = await getCategoryByCloudId(cloudId);
+    if (category != null) {
+      final updatedCategory = category.copyWith(name: name);
+      await updateLocal(updatedCategory);
+    }
   }
+
   // ==========================
   // DELETE
   // ==========================
