@@ -14,6 +14,8 @@ import 'subscription_detail_screen.dart';
 import 'cancelled_subscription_screen.dart';
 import 'dashboard_screen.dart';
 
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -45,8 +47,57 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Widget _infoMini(String title, String value) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   String formatDate(DateTime date) {
     return date.toLocal().toString().split(' ')[0];
+  }
+
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Cerrar sesión"),
+        content: const Text("¿Seguro que deseas cerrar sesión?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Cerrar sesión"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await SessionManager.instance.logout();
   }
 
   Future<void> _cancelSubscription(int id, String name) async {
@@ -98,7 +149,32 @@ class _HomeScreenState extends State<HomeScreen> {
     final subscriptionProvider = context.watch<SubscriptionProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Mis Suscripciones")),
+      appBar: AppBar(
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Mis Suscripciones",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              SessionManager.instance.currentUser?.email ?? "",
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Cerrar sesión",
+            onPressed: _logout,
+          ),
+        ],
+      ),
       body: Consumer<PaymentHistoryProvider>(
         builder: (context, paymentProvider, _) {
           if (subscriptionProvider.isLoading) {
@@ -129,26 +205,13 @@ class _HomeScreenState extends State<HomeScreen> {
               final status = SubscriptionStatusHelper.getStatus(lastCovered);
 
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: ListTile(
-                  leading: const Icon(Icons.subscriptions),
-                  title: Text(subscription.serviceName),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Inicio: ${formatDate(subscription.startDate)}"),
-                      Text(
-                        "Estado: ${SubscriptionStatusHelper.getText(status)}",
-                        style: TextStyle(
-                          color: SubscriptionStatusHelper.getColor(status),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text("Activo hasta: ${formatDate(lastCovered)}"),
-                      Text("Category: ${sub.categoryName}"),
-                      Text("Payment: ${sub.paymentMethodName}"),
-                    ],
-                  ),
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -157,35 +220,119 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   },
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("\$${subscription.cost}"),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AddSubscriptionScreen(
-                                subscription: subscription,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 24,
+                              child: Icon(Icons.subscriptions),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                subscription.serviceName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.cancel, color: Colors.red),
-                        onPressed: () {
-                          if (subscription.id != null) {
-                            _cancelSubscription(
-                              subscription.id!,
-                              subscription.serviceName,
-                            );
-                          }
-                        },
-                      ),
-                    ],
+                            Text(
+                              "\$${subscription.cost}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _infoMini(
+                                "Inicio",
+                                formatDate(subscription.startDate),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _infoMini(
+                                "Activo hasta",
+                                formatDate(lastCovered),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _infoMini("Categoría", sub.categoryName),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _infoMini("Pago", sub.paymentMethodName),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Chip(
+                          backgroundColor: SubscriptionStatusHelper.getColor(
+                            status,
+                          ).withOpacity(.15),
+                          label: Text(
+                            SubscriptionStatusHelper.getText(status),
+                            style: TextStyle(
+                              color: SubscriptionStatusHelper.getColor(status),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AddSubscriptionScreen(
+                                      subscription: subscription,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.cancel, color: Colors.red),
+                              onPressed: () {
+                                if (subscription.id != null) {
+                                  _cancelSubscription(
+                                    subscription.id!,
+                                    subscription.serviceName,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -193,25 +340,22 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
+      floatingActionButton: SpeedDial(
+        icon: Icons.menu,
+        activeIcon: Icons.close,
+        spacing: 10,
+        spaceBetweenChildren: 8,
+        direction: SpeedDialDirection.up,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.25,
         children: [
-          FloatingActionButton(
-            heroTag: "dashboard",
-            backgroundColor: Colors.blue,
-            child: const Icon(Icons.dashboard),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardScreen()),
-              );
-            },
-          ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "add_sub",
+          SpeedDialChild(
             child: const Icon(Icons.add),
-            onPressed: () {
+            backgroundColor: Colors.blue,
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -220,36 +364,44 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "categories",
-            backgroundColor: Colors.orange,
+
+          SpeedDialChild(
+            child: const Icon(Icons.dashboard),
+            backgroundColor: Colors.deepPurple,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              );
+            },
+          ),
+
+          SpeedDialChild(
             child: const Icon(Icons.category),
-            onPressed: () {
+            backgroundColor: Colors.orange,
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CategoryScreen()),
               );
             },
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "payments",
-            backgroundColor: Colors.green,
+
+          SpeedDialChild(
             child: const Icon(Icons.payment),
-            onPressed: () {
+            backgroundColor: Colors.green,
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
               );
             },
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "cancelled",
-            backgroundColor: Colors.red,
+
+          SpeedDialChild(
             child: const Icon(Icons.history),
-            onPressed: () {
+            backgroundColor: Colors.red,
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(

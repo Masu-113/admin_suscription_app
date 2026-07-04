@@ -108,6 +108,8 @@ class SessionManager extends ChangeNotifier {
 
     _currentUser = null;
 
+    debugPrint("Sesión cerrada.");
+
     notifyListeners();
   }
 }
