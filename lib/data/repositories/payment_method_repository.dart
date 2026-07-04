@@ -66,10 +66,20 @@ class PaymentMethodRepository {
     required String type,
     required String? details,
   }) async {
+    // Actualizar en Supabase
     await _supabase.updatePaymentMethod(
       id: cloudId,
       type: type,
       details: details,
+    );
+
+    // Actualizar en SQLite
+    final db = await _dbHelper.database;
+    await db.update(
+      'payment_methods',
+      {'type': type, 'details': details},
+      where: 'cloud_id = ?',
+      whereArgs: [cloudId],
     );
   }
 
@@ -80,8 +90,10 @@ class PaymentMethodRepository {
   Future<void> deletePaymentMethod(PaymentMethod method) async {
     final db = await _dbHelper.database;
 
+    // Eliminar de SQLite
     await db.delete('payment_methods', where: 'id = ?', whereArgs: [method.id]);
 
+    // Eliminar de Supabase si tiene un cloudId
     if (method.cloudId != null) {
       await _supabase.deletePaymentMethod(method.cloudId!);
     }
