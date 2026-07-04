@@ -199,4 +199,15 @@ class SupabaseRepository {
         .eq('subscription_id', subscriptionId)
         .order('action_date', ascending: false);
   }
+
+  Future<List<Map<String, dynamic>>> getPaymentsByUser(String userId) async {
+    return await _client
+        .from('payment_history')
+        .select('''
+        *,
+        subscriptions!inner(user_id)
+      ''')
+        .eq('subscriptions.user_id', userId)
+        .order('payment_date', ascending: false);
+  }
 }

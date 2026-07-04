@@ -1,6 +1,8 @@
 class SubscriptionHistory {
   final int? id;
 
+  final int? idCloud;
+
   final int subscriptionId;
 
   final String action;
@@ -9,6 +11,7 @@ class SubscriptionHistory {
 
   SubscriptionHistory({
     this.id,
+    this.idCloud,
     required this.subscriptionId,
     required this.action,
     required this.actionDate,
@@ -17,6 +20,8 @@ class SubscriptionHistory {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+
+      'cloud_id': idCloud,
 
       'subscription_id': subscriptionId,
 
@@ -29,6 +34,8 @@ class SubscriptionHistory {
   factory SubscriptionHistory.fromMap(Map<String, dynamic> map) {
     return SubscriptionHistory(
       id: map['id'] as int?,
+
+      idCloud: map['cloud_id'] as int?,
 
       subscriptionId: map['subscription_id'] as int,
 

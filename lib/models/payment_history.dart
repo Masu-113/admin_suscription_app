@@ -1,6 +1,8 @@
 class PaymentHistory {
   final int? id;
 
+  final int? idCloud;
+
   final DateTime paymentDate;
 
   final double amount;
@@ -11,6 +13,8 @@ class PaymentHistory {
 
   PaymentHistory({
     this.id,
+
+    this.idCloud,
 
     required this.paymentDate,
 
@@ -25,6 +29,8 @@ class PaymentHistory {
     return {
       'id': id,
 
+      'cloud_id': idCloud,
+
       'payment_date': paymentDate.toIso8601String(),
 
       'amount': amount,
@@ -38,6 +44,8 @@ class PaymentHistory {
   factory PaymentHistory.fromMap(Map<String, dynamic> map) {
     return PaymentHistory(
       id: map['id'] as int?,
+
+      idCloud: map['cloud_id'] as int?,
 
       paymentDate: DateTime.parse(map['payment_date'] as String),
 

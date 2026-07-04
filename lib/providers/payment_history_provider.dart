@@ -10,7 +10,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
   List<PaymentHistory> payments = [];
   bool isLoading = false;
 
-  // CARGAR TODOS LOS PAGOS
+  // 🔹 LOAD LOCAL ONLY (correcto)
   Future<void> loadPayments() async {
     try {
       isLoading = true;
@@ -25,7 +25,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
     }
   }
 
-  // AGREGAR PAGO
+  // INSERT (SOLO LOCAL AQUÍ)
   Future<bool> addPayment(PaymentHistory payment) async {
     final result = _validatePayment(payment);
 
@@ -33,17 +33,33 @@ class PaymentHistoryProvider extends ChangeNotifier {
       return false;
     }
 
-    await _repo.insertPayment(payment);
-    await loadPayments(); // Cargar todos los pagos después de agregar uno nuevo
+    try {
+      final localId = await _repo.insertPayment(payment);
 
-    return true;
+      final savedPayment = PaymentHistory(
+        id: localId,
+        idCloud: payment.idCloud,
+        paymentDate: payment.paymentDate,
+        amount: payment.amount,
+        subscriptionId: payment.subscriptionId,
+        coveredUntil: payment.coveredUntil,
+      );
+
+      payments.add(savedPayment);
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      debugPrint("Error adding payment: $e");
+      return false;
+    }
   }
 
+  // 🔹 VALIDACIÓN LOCAL (OK mantenerla)
   PaymentValidationResult _validatePayment(PaymentHistory payment) {
     if (_isDuplicate(payment)) {
       return PaymentValidationResult.duplicate;
     }
-
     return PaymentValidationResult.allowed;
   }
 
@@ -62,21 +78,21 @@ class PaymentHistoryProvider extends ChangeNotifier {
         .where((p) => p.subscriptionId == subscriptionId)
         .toList();
 
-    if (list.isEmpty) {
-      return null;
-    }
+    if (list.isEmpty) return null;
 
     list.sort((a, b) => b.coveredUntil.compareTo(a.coveredUntil));
     return list.first;
   }
 
+  // 🔹 LOCAL UPDATE
   Future<void> updatePayment(PaymentHistory payment) async {
-    await _repo.updatePayment(payment);
-    await loadPayments(); // Cargar todos los pagos después de actualizar uno
+    await _repo.updateLocal(payment);
+    await loadPayments();
   }
 
+  // 🔹 LOCAL DELETE
   Future<void> deletePayment(int id) async {
-    await _repo.deletePayment(id);
-    await loadPayments(); // Cargar todos los pagos después de eliminar uno
+    await _repo.deleteLocal(id);
+    await loadPayments();
   }
 }

@@ -74,18 +74,11 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
   Future<void> _addPayment(List<PaymentHistory> payments) async {
     final subscription = widget.data.subscription;
 
-    if (subscription.id == null) {
-      return;
-    }
+    if (subscription.id == null) return;
 
-    // BLOQUEAR PAGOS EN CANCELADAS
     if (subscription.isCancelledBool) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Esta suscripción está cancelada. No se pueden registrar nuevos pagos.",
-          ),
-        ),
+        const SnackBar(content: Text("Esta suscripción está cancelada.")),
       );
       return;
     }
@@ -97,29 +90,25 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     if (status != SubscriptionStatus.expired) {
       final confirm = await showDialog<bool>(
         context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: const Text("Pago adelantado"),
-            content: const Text(
-              "Esta suscripción todavía está cubierta.\n\n¿Deseas extender el periodo?",
+        builder: (_) => AlertDialog(
+          title: const Text("Pago adelantado"),
+          content: const Text(
+            "Esta suscripción aún está activa.\n¿Deseas extenderla?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancelar"),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancelar"),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Continuar"),
-              ),
-            ],
-          );
-        },
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Continuar"),
+            ),
+          ],
+        ),
       );
 
-      if (confirm != true) {
-        return;
-      }
+      if (confirm != true) return;
     }
 
     final payment = PaymentHistory(
@@ -129,26 +118,27 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       coveredUntil: _calculateNextCoveredUntil(payments),
     );
 
-    final success = await context.read<PaymentHistoryProvider>().addPayment(
-      payment,
-    );
+    try {
+      // ✔ AQUÍ YA SE USA EL PAYMENT (FIX DEL ERROR 1)
+      final success = await context.read<PaymentHistoryProvider>().addPayment(
+        payment,
+      );
 
-    if (!mounted) {
-      return;
-    }
+      if (!mounted) return;
 
-    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "No se puede registrar el pago porque ya existe un pago registrado hoy.",
+            success ? "Pago registrado con éxito" : "Pago duplicado",
           ),
         ),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pago registrado con éxito.")),
-      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Error al registrar pago")));
     }
   }
 
@@ -268,7 +258,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                           },
                         ),
                 ),
-                if (subscription.isCancelledBool)
+                if (!subscription.isCancelledBool)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(

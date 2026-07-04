@@ -3,33 +3,24 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   DatabaseHelper._();
-
   static final DatabaseHelper _instance = DatabaseHelper._();
-
   factory DatabaseHelper() => _instance;
-
   static Database? _database;
-
   Future<Database> get database async {
     if (_database != null) {
       return _database!;
     }
-
     _database = await _initDatabase();
-
     return _database!;
   }
 
   Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'subscriptions.db');
-
     return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) async {
-        // ==========================
         // USERS
-        // ==========================
 
         await db.execute('''
           CREATE TABLE users(
@@ -39,9 +30,7 @@ class DatabaseHelper {
           )
         ''');
 
-        // ==========================
         // CATEGORIES
-        // ==========================
 
         await db.execute('''
           CREATE TABLE categories(
@@ -52,9 +41,7 @@ class DatabaseHelper {
           )
         ''');
 
-        // ==========================
         // PAYMENT METHODS
-        // ==========================
 
         await db.execute('''
           CREATE TABLE payment_methods(
@@ -66,9 +53,7 @@ class DatabaseHelper {
           )
         ''');
 
-        // ==========================
         // SUBSCRIPTIONS
-        // ==========================
 
         await db.execute('''
           CREATE TABLE subscriptions(
@@ -86,13 +71,12 @@ class DatabaseHelper {
           )
         ''');
 
-        // ==========================
         // PAYMENT HISTORY
-        // ==========================
 
         await db.execute('''
           CREATE TABLE payment_history(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cloud_id INTEGER,
             payment_date TEXT NOT NULL,
             amount REAL NOT NULL,
             subscription_id INTEGER NOT NULL,
@@ -100,14 +84,13 @@ class DatabaseHelper {
           )
         ''');
 
-        // ==========================
         // SUBSCRIPTION HISTORY
-        // ==========================
 
         await db.execute('''
           CREATE TABLE subscription_history(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subscription_id INTEGER NOT NULL,
+            cloud_id INTEGER,
+            subscription_id INTEGER NOT NULL, 
             action TEXT NOT NULL,
             action_date TEXT NOT NULL
           )
@@ -118,9 +101,7 @@ class DatabaseHelper {
 
   Future<void> deleteDatabaseFile() async {
     final path = join(await getDatabasesPath(), 'subscriptions.db');
-
     await deleteDatabase(path);
-
     _database = null;
   }
 }
