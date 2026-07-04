@@ -13,12 +13,13 @@ class SubscriptionProvider extends ChangeNotifier {
 
   String? currentUserId;
 
-  // LOAD TODAS (ADMIN / DEBUG)
+  // ==========================
+  // CARGAR TODAS
+  // ==========================
 
   Future<void> loadSubscriptions() async {
     try {
       isLoading = true;
-
       notifyListeners();
 
       subscriptions = await _repo.getSubscriptionsFull();
@@ -26,19 +27,18 @@ class SubscriptionProvider extends ChangeNotifier {
       debugPrint("Error loading subscriptions: $e");
     } finally {
       isLoading = false;
-
       notifyListeners();
     }
   }
 
-  // LOAD POR USUARIO
+  // ==========================
+  // CARGAR POR USUARIO
+  // ==========================
 
   Future<void> loadUserSubscriptions(String userId) async {
     try {
       isLoading = true;
-
       currentUserId = userId;
-
       notifyListeners();
 
       subscriptions = await _repo.getSubscriptionsFullByUser(userId);
@@ -46,52 +46,79 @@ class SubscriptionProvider extends ChangeNotifier {
       debugPrint("Error loading user subscriptions: $e");
     } finally {
       isLoading = false;
-
       notifyListeners();
     }
   }
 
-  // ADD
+  // ==========================
+  // AGREGAR
+  // ==========================
 
   Future<int> addSubscription(Subscription sub) async {
-    final id = await _repo.insertSubscription(sub);
+    try {
+      final id = await _repo.insertSubscription(sub);
 
-    if (currentUserId != null) {
-      await loadUserSubscriptions(currentUserId!);
-    } else {
-      await loadSubscriptions();
+      if (currentUserId != null) {
+        await loadUserSubscriptions(currentUserId!);
+      } else {
+        await loadSubscriptions();
+      }
+
+      return id;
+    } catch (e) {
+      debugPrint("Error adding subscription: $e");
+      rethrow;
     }
-
-    return id;
   }
 
+  // ==========================
   // CANCELAR
+  // ==========================
 
   Future<void> cancelSubscription(int id) async {
-    await _repo.cancelSubscription(id);
+    try {
+      await _repo.cancelSubscription(id);
 
-    if (currentUserId != null) {
-      await loadUserSubscriptions(currentUserId!);
+      if (currentUserId != null) {
+        await loadUserSubscriptions(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error cancelling subscription: $e");
+      rethrow;
     }
   }
 
+  // ==========================
   // REACTIVAR
+  // ==========================
 
   Future<void> restoreSubscription(int id) async {
-    await _repo.restoreSubscription(id);
+    try {
+      await _repo.restoreSubscription(id);
 
-    if (currentUserId != null) {
-      await loadUserSubscriptions(currentUserId!);
+      if (currentUserId != null) {
+        await loadUserSubscriptions(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error restoring subscription: $e");
+      rethrow;
     }
   }
 
-  // UPDATE
+  // ==========================
+  // ACTUALIZAR
+  // ==========================
 
   Future<void> updateSubscription(Subscription sub) async {
-    await _repo.updateSubscription(sub);
+    try {
+      await _repo.updateSubscription(sub);
 
-    if (currentUserId != null) {
-      await loadUserSubscriptions(currentUserId!);
+      if (currentUserId != null) {
+        await loadUserSubscriptions(currentUserId!);
+      }
+    } catch (e) {
+      debugPrint("Error updating subscription: $e");
+      rethrow;
     }
   }
 }

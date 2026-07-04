@@ -7,8 +7,19 @@ import '../../models/subscription.dart';
 import 'subscription_history_repository.dart';
 import '../../models/subscription_history.dart';
 
+import '../repositories/supabase_repository.dart';
+import 'category_repository.dart';
+import 'payment_method_repository.dart';
+import 'package:flutter/foundation.dart';
+
 class SubscriptionRepository {
   final dbHelper = DatabaseHelper();
+
+  final SupabaseRepository _supabase = SupabaseRepository();
+
+  final CategoryRepository _categoryRepo = CategoryRepository();
+
+  final PaymentMethodRepository _paymentRepo = PaymentMethodRepository();
 
   final SubscriptionHistoryRepository _historyRepo =
       SubscriptionHistoryRepository();
@@ -18,19 +29,53 @@ class SubscriptionRepository {
   Future<int> insertSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 
-    final id = await db.insert('subscriptions', sub.toMap());
+    int? cloudCategoryId;
+    int? cloudPaymentMethodId;
+
+    if (sub.categoryId != null) {
+      final category = await _categoryRepo.getCategoryByLocalId(
+        sub.categoryId!,
+      );
+      cloudCategoryId = category?.cloudId;
+    }
+
+    if (sub.paymentMethodId != null) {
+      final payment = await _paymentRepo.getPaymentMethodByLocalId(
+        sub.paymentMethodId!,
+      );
+      cloudPaymentMethodId = payment?.cloudId;
+    }
+
+    final data = {
+      'service_name': sub.serviceName,
+      'cost': sub.cost,
+      'start_date': sub.startDate.toIso8601String(),
+      'billing_cycle': sub.billingCycle.name,
+      'status': sub.status,
+      'isCancelled': sub.isCancelled,
+      'category_id': cloudCategoryId,
+      'payment_method_id': cloudPaymentMethodId,
+      'user_id': sub.userId,
+    };
+
+    debugPrint(data.toString());
+
+    final cloudId = await _supabase.insertSubscription(data);
+
+    final localId = await db.insert('subscriptions', {
+      ...sub.toMap(),
+      'cloud_id': cloudId,
+    });
 
     await _historyRepo.insertHistory(
       SubscriptionHistory(
-        subscriptionId: id,
-
+        subscriptionId: localId,
         action: "CREATED",
-
         actionDate: DateTime.now(),
       ),
     );
 
-    return id;
+    return localId;
   }
 
   // OBTENER TODAS (GLOBAL LOCAL)
@@ -58,7 +103,7 @@ class SubscriptionRepository {
 
         status: (map['status'] ?? 'Active') as String,
 
-        isCancelled: map['isCancelled'] == 1,
+        isCancelled: map['isCancelled'] == 1 ? 1 : 0,
 
         categoryId: map['category_id'] as int?,
 
@@ -100,7 +145,7 @@ class SubscriptionRepository {
 
         status: (map['status'] ?? 'Active') as String,
 
-        isCancelled: map['isCancelled'] == 1,
+        isCancelled: map['isCancelled'] == 1 ? 1 : 0,
 
         categoryId: map['category_id'] as int?,
 
@@ -140,7 +185,7 @@ class SubscriptionRepository {
 
         status: (s['status'] ?? 'Active') as String,
 
-        isCancelled: s['isCancelled'] == 1,
+        isCancelled: s['isCancelled'] == 1 ? 1 : 0,
 
         categoryId: s['category_id'] as int?,
 
@@ -212,7 +257,7 @@ class SubscriptionRepository {
 
         status: (s['status'] ?? 'Active') as String,
 
-        isCancelled: s['isCancelled'] == 1,
+        isCancelled: s['isCancelled'] == 1 ? 1 : 0,
 
         categoryId: s['category_id'] as int?,
 

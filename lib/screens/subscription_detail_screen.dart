@@ -79,7 +79,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     }
 
     // BLOQUEAR PAGOS EN CANCELADAS
-    if (subscription.isCancelled) {
+    if (subscription.isCancelledBool) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -268,7 +268,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                           },
                         ),
                 ),
-                if (!subscription.isCancelled)
+                if (subscription.isCancelledBool)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(

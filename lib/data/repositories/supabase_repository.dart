@@ -132,7 +132,7 @@ class SupabaseRepository {
   Future<void> cancelSubscription(int id) async {
     await _client
         .from('subscriptions')
-        .update({'isCancelled': true, 'status': 'Cancelled'})
+        .update({'isCancelled': 1, 'status': 'Cancelled'})
         .eq('id', id);
   }
 

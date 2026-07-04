@@ -73,14 +73,15 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE subscriptions(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cloud_id INTEGER,
             service_name TEXT NOT NULL,
             cost REAL NOT NULL,
             start_date TEXT NOT NULL,
             billing_cycle TEXT NOT NULL,
             status TEXT NOT NULL,
+            isCancelled INTEGER NOT NULL,
             category_id INTEGER,
             payment_method_id INTEGER,
-            isCancelled INTEGER NOT NULL DEFAULT 0,
             user_id TEXT NOT NULL
           )
         ''');
