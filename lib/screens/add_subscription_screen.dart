@@ -152,21 +152,15 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
     final subscription = Subscription(
       id: widget.subscription?.id,
-
+      cloudId: widget.subscription?.cloudId,
       serviceName: nameController.text.trim(),
-
       cost: cost,
-
       startDate: selectedStartDate!,
-
       billingCycle: selectedCycle,
-
       status: widget.subscription?.status ?? "Active",
-
+      isCancelled: widget.subscription?.isCancelled ?? 0,
       categoryId: selectedCategoryId,
-
       paymentMethodId: selectedPaymentId,
-
       userId: currentUser.id,
     );
 

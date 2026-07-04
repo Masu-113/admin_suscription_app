@@ -1,4 +1,4 @@
-import 'package:admin_suscription_app/models/billing_cycle.dart';
+//import 'package:admin_suscription_app/models/billing_cycle.dart';
 import 'package:admin_suscription_app/models/subscription_full.dart';
 
 import '../local/database_helper.dart';
@@ -85,33 +85,7 @@ class SubscriptionRepository {
 
     final result = await db.query('subscriptions');
 
-    return result.map((map) {
-      return Subscription(
-        id: map['id'] as int?,
-
-        serviceName: (map['service_name'] ?? '') as String,
-
-        cost: (map['cost'] as num).toDouble(),
-
-        startDate: DateTime.parse(map['start_date'] as String),
-
-        billingCycle: BillingCycle.values.firstWhere(
-          (e) => e.name == map['billing_cycle'],
-
-          orElse: () => BillingCycle.monthly,
-        ),
-
-        status: (map['status'] ?? 'Active') as String,
-
-        isCancelled: map['isCancelled'] == 1 ? 1 : 0,
-
-        categoryId: map['category_id'] as int?,
-
-        paymentMethodId: map['payment_method_id'] as int?,
-
-        userId: map['user_id'] as String?,
-      );
-    }).toList();
+    return result.map((map) => Subscription.fromMap(map)).toList();
   }
 
   // 🔥 OBTENER POR USUARIO (CORRECTO)
@@ -127,33 +101,7 @@ class SubscriptionRepository {
       whereArgs: [userId],
     );
 
-    return result.map((map) {
-      return Subscription(
-        id: map['id'] as int?,
-
-        serviceName: (map['service_name'] ?? '') as String,
-
-        cost: (map['cost'] as num).toDouble(),
-
-        startDate: DateTime.parse(map['start_date'] as String),
-
-        billingCycle: BillingCycle.values.firstWhere(
-          (e) => e.name == map['billing_cycle'],
-
-          orElse: () => BillingCycle.monthly,
-        ),
-
-        status: (map['status'] ?? 'Active') as String,
-
-        isCancelled: map['isCancelled'] == 1 ? 1 : 0,
-
-        categoryId: map['category_id'] as int?,
-
-        paymentMethodId: map['payment_method_id'] as int?,
-
-        userId: map['user_id'] as String?,
-      );
-    }).toList();
+    return result.map((map) => Subscription.fromMap(map)).toList();
   }
 
   // FULL GENERAL
@@ -168,31 +116,7 @@ class SubscriptionRepository {
     final payments = await db.query('payment_methods');
 
     return subs.map((s) {
-      final sub = Subscription(
-        id: s['id'] as int?,
-
-        serviceName: (s['service_name'] ?? '') as String,
-
-        cost: (s['cost'] as num).toDouble(),
-
-        startDate: DateTime.parse(s['start_date'] as String),
-
-        billingCycle: BillingCycle.values.firstWhere(
-          (e) => e.name == s['billing_cycle'],
-
-          orElse: () => BillingCycle.monthly,
-        ),
-
-        status: (s['status'] ?? 'Active') as String,
-
-        isCancelled: s['isCancelled'] == 1 ? 1 : 0,
-
-        categoryId: s['category_id'] as int?,
-
-        paymentMethodId: s['payment_method_id'] as int?,
-
-        userId: s['user_id'] as String?,
-      );
+      final sub = Subscription.fromMap(s);
 
       final categoryName =
           categories.firstWhere(
@@ -240,31 +164,7 @@ class SubscriptionRepository {
     final payments = await db.query('payment_methods');
 
     return subs.map((s) {
-      final sub = Subscription(
-        id: s['id'] as int?,
-
-        serviceName: (s['service_name'] ?? '') as String,
-
-        cost: (s['cost'] as num).toDouble(),
-
-        startDate: DateTime.parse(s['start_date'] as String),
-
-        billingCycle: BillingCycle.values.firstWhere(
-          (e) => e.name == s['billing_cycle'],
-
-          orElse: () => BillingCycle.monthly,
-        ),
-
-        status: (s['status'] ?? 'Active') as String,
-
-        isCancelled: s['isCancelled'] == 1 ? 1 : 0,
-
-        categoryId: s['category_id'] as int?,
-
-        paymentMethodId: s['payment_method_id'] as int?,
-
-        userId: s['user_id'] as String?,
-      );
+      final sub = Subscription.fromMap(s);
 
       final categoryName =
           categories.firstWhere(
@@ -390,6 +290,14 @@ class SubscriptionRepository {
         },
       );
     }
+
+    debugPrint("========== UPDATE ==========");
+    debugPrint("Local ID: ${sub.id}");
+    debugPrint("Cloud ID: ${sub.cloudId}");
+    debugPrint("Category Local: ${sub.categoryId}");
+    debugPrint("Payment Local: ${sub.paymentMethodId}");
+    debugPrint("Cloud Category: $cloudCategoryId");
+    debugPrint("Cloud Payment: $cloudPaymentMethodId");
   }
 
   // ==========================
