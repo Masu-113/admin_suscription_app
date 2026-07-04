@@ -38,7 +38,7 @@ class DashboardScreen extends StatelessWidget {
     for (final item in subscriptions) {
       final subscription = item.subscription;
 
-      if (subscription.isCancelled) {
+      if (subscription.isCancelledBool) {
         cancelled++;
 
         continue;

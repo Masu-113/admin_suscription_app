@@ -102,14 +102,7 @@ class SupabaseRepository {
   // =========================
 
   Future<List<Map<String, dynamic>>> getSubscriptions(String userId) async {
-    return await _client
-        .from('subscriptions')
-        .select('''
-          *,
-          categories(name),
-          payment_methods(type)
-        ''')
-        .eq('user_id', userId);
+    return await _client.from('subscriptions').select().eq('user_id', userId);
   }
 
   Future<int> insertSubscription(Map<String, dynamic> data) async {
@@ -133,6 +126,13 @@ class SupabaseRepository {
     await _client
         .from('subscriptions')
         .update({'isCancelled': 1, 'status': 'Cancelled'})
+        .eq('id', id);
+  }
+
+  Future<void> restoreSubscription(int id) async {
+    await _client
+        .from('subscriptions')
+        .update({'isCancelled': 0, 'status': 'Active'})
         .eq('id', id);
   }
 

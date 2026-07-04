@@ -297,22 +297,23 @@ class SubscriptionRepository {
   Future<void> cancelSubscription(int id) async {
     final db = await dbHelper.database;
 
+    final subscription = await getSubscriptionByLocalId(id);
+
     await db.update(
       'subscriptions',
-
-      {'isCancelled': 1},
-
+      {'isCancelled': 1, 'status': 'Cancelled'},
       where: 'id = ?',
-
       whereArgs: [id],
     );
+
+    if (subscription?.cloudId != null) {
+      await _supabase.cancelSubscription(subscription!.cloudId!);
+    }
 
     await _historyRepo.insertHistory(
       SubscriptionHistory(
         subscriptionId: id,
-
         action: "CANCELLED",
-
         actionDate: DateTime.now(),
       ),
     );
@@ -323,22 +324,23 @@ class SubscriptionRepository {
   Future<void> restoreSubscription(int id) async {
     final db = await dbHelper.database;
 
+    final subscription = await getSubscriptionByLocalId(id);
+
     await db.update(
       'subscriptions',
-
-      {'isCancelled': 0},
-
+      {'isCancelled': 0, 'status': 'Active'},
       where: 'id = ?',
-
       whereArgs: [id],
     );
+
+    if (subscription?.cloudId != null) {
+      await _supabase.restoreSubscription(subscription!.cloudId!);
+    }
 
     await _historyRepo.insertHistory(
       SubscriptionHistory(
         subscriptionId: id,
-
         action: "RESTORED",
-
         actionDate: DateTime.now(),
       ),
     );
@@ -349,14 +351,110 @@ class SubscriptionRepository {
   Future<void> updateSubscription(Subscription sub) async {
     final db = await dbHelper.database;
 
+    int? cloudCategoryId;
+    int? cloudPaymentMethodId;
+
+    if (sub.categoryId != null) {
+      final category = await _categoryRepo.getCategoryByLocalId(
+        sub.categoryId!,
+      );
+      cloudCategoryId = category?.cloudId;
+    }
+
+    if (sub.paymentMethodId != null) {
+      final payment = await _paymentRepo.getPaymentMethodByLocalId(
+        sub.paymentMethodId!,
+      );
+      cloudPaymentMethodId = payment?.cloudId;
+    }
+
     await db.update(
       'subscriptions',
-
       sub.toMap(),
-
       where: 'id = ?',
-
       whereArgs: [sub.id],
     );
+
+    if (sub.cloudId != null) {
+      await _supabase.updateSubscription(
+        id: sub.cloudId!,
+        data: {
+          'service_name': sub.serviceName,
+          'cost': sub.cost,
+          'start_date': sub.startDate.toIso8601String(),
+          'billing_cycle': sub.billingCycle.name,
+          'status': sub.status,
+          'isCancelled': sub.isCancelled,
+          'category_id': cloudCategoryId,
+          'payment_method_id': cloudPaymentMethodId,
+        },
+      );
+    }
+  }
+
+  // ==========================
+  // BUSCAR POR CLOUD ID
+  // ==========================
+
+  Future<Subscription?> getSubscriptionByCloudId(int cloudId) async {
+    final db = await dbHelper.database;
+
+    final result = await db.query(
+      'subscriptions',
+      where: 'cloud_id = ?',
+      whereArgs: [cloudId],
+      limit: 1,
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return Subscription.fromMap(result.first);
+  }
+
+  // ==========================
+  // INSERTAR SOLO SQLITE
+  // ==========================
+
+  Future<void> insertLocal(Subscription subscription) async {
+    final db = await dbHelper.database;
+
+    await db.insert('subscriptions', subscription.toMap());
+  }
+
+  // ==========================
+  // UPDATE SOLO SQLITE
+  // ==========================
+
+  Future<void> updateLocal(Subscription subscription) async {
+    final db = await dbHelper.database;
+
+    await db.update(
+      'subscriptions',
+      subscription.toMap(),
+      where: 'id = ?',
+      whereArgs: [subscription.id],
+    );
+  }
+  // ==========================
+  // BUSCAR POR ID LOCAL
+  // ==========================
+
+  Future<Subscription?> getSubscriptionByLocalId(int id) async {
+    final db = await dbHelper.database;
+
+    final result = await db.query(
+      'subscriptions',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return Subscription.fromMap(result.first);
   }
 }

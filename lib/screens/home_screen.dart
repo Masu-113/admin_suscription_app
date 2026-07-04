@@ -106,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           final activeSubscriptions = subscriptionProvider.subscriptions
-              .where((s) => !s.subscription.isCancelled)
+              .where((s) => !s.subscription.isCancelledBool)
               .toList();
 
           if (activeSubscriptions.isEmpty) {

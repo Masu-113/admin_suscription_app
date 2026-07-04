@@ -64,7 +64,7 @@ class CancelledSubscriptionScreen extends StatelessWidget {
     final subscriptionProvider = context.watch<SubscriptionProvider>();
 
     final cancelledSubscriptions = subscriptionProvider.subscriptions
-        .where((s) => s.subscription.isCancelled)
+        .where((s) => s.subscription.isCancelledBool)
         .toList();
 
     return Scaffold(
