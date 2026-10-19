@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/subscription.dart';
 import '../models/subscription_full.dart';
 import '../data/repositories/subscription_repository.dart';
+import '../core/session_manager.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   final SubscriptionRepository _repo = SubscriptionRepository();
@@ -18,17 +19,15 @@ class SubscriptionProvider extends ChangeNotifier {
   // ==========================
 
   Future<void> loadSubscriptions() async {
-    try {
-      isLoading = true;
-      notifyListeners();
+    final userId = SessionManager.instance.userId;
 
-      subscriptions = await _repo.getSubscriptionsFull();
-    } catch (e) {
-      debugPrint("Error loading subscriptions: $e");
-    } finally {
-      isLoading = false;
+    if (userId == null) {
+      subscriptions = [];
       notifyListeners();
+      return;
     }
+
+    await loadUserSubscriptions(userId);
   }
 
   // ==========================
@@ -120,5 +119,11 @@ class SubscriptionProvider extends ChangeNotifier {
       debugPrint("Error updating subscription: $e");
       rethrow;
     }
+  }
+
+  void clear() {
+    subscriptions = [];
+    currentUserId = null;
+    notifyListeners();
   }
 }

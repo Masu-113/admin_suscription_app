@@ -35,15 +35,17 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint("Current user: ${session.currentUser?.email}");
 
     Future.microtask(() async {
+      if (!mounted) return;
+
       final user = SessionManager.instance.currentUser;
+      final subscriptionProvider = context.read<SubscriptionProvider>();
+      final paymentProvider = context.read<PaymentHistoryProvider>();
 
       if (user != null) {
-        await context.read<SubscriptionProvider>().loadUserSubscriptions(
-          user.id,
-        );
+        await subscriptionProvider.loadUserSubscriptions(user.id);
       }
 
-      await context.read<PaymentHistoryProvider>().loadPayments();
+      await paymentProvider.loadPayments();
     });
   }
 
@@ -96,6 +98,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (confirm != true) return;
+    if (!mounted) return;
+
+    context.read<SubscriptionProvider>().clear();
+    context.read<PaymentHistoryProvider>().clear();
 
     await SessionManager.instance.logout();
   }
@@ -130,6 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (confirm != true) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
 
@@ -290,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Chip(
                           backgroundColor: SubscriptionStatusHelper.getColor(
                             status,
-                          ).withOpacity(.15),
+                          ).withValues(alpha: 0.15),
                           label: Text(
                             SubscriptionStatusHelper.getText(status),
                             style: TextStyle(

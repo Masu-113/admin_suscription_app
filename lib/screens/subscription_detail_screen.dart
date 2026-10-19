@@ -35,9 +35,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     super.initState();
 
     Future.microtask(() {
-      context
-          .read<PaymentHistoryProvider>()
-          .loadPayments(); // Cargar todos los pagos
+      if (!mounted) return;
+      context.read<PaymentHistoryProvider>().loadPayments();
 
       if (widget.data.subscription.id != null) {
         context.read<SubscriptionHistoryProvider>().loadHistory(
@@ -109,6 +108,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       );
 
       if (confirm != true) return;
+      if (!mounted) return;
     }
 
     final payment = PaymentHistory(

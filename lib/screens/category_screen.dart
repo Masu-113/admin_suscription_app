@@ -21,8 +21,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       final user = SessionManager.instance.currentUser;
-
       if (user != null) {
         context.read<CategoryProvider>().loadUserCategories(user.id);
       }

@@ -18,25 +18,22 @@ class CancelledSubscriptionScreen extends StatelessWidget {
     int id,
     String name,
   ) async {
+    final provider = context.read<SubscriptionProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
     final confirm = await showDialog<bool>(
       context: context,
-
       builder: (_) {
         return AlertDialog(
           title: const Text("Reactivar suscripción"),
-
           content: Text("¿Deseas reactivar $name?"),
-
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-
               child: const Text("Cancelar"),
             ),
-
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-
               child: const Text("Reactivar"),
             ),
           ],
@@ -48,13 +45,9 @@ class CancelledSubscriptionScreen extends StatelessWidget {
       return;
     }
 
-    await context.read<SubscriptionProvider>().restoreSubscription(id);
+    await provider.restoreSubscription(id);
 
-    if (!context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       const SnackBar(content: Text("Suscripción reactivada correctamente.")),
     );
   }

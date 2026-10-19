@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/payment_history.dart';
 import '../data/repositories/payment_history_repository.dart';
 
+import '../core/session_manager.dart';
+
 enum PaymentValidationResult { allowed, duplicate }
 
 class PaymentHistoryProvider extends ChangeNotifier {
@@ -10,13 +12,15 @@ class PaymentHistoryProvider extends ChangeNotifier {
   List<PaymentHistory> payments = [];
   bool isLoading = false;
 
-  // 🔹 LOAD LOCAL ONLY (correcto)
+  //  LOAD LOCAL ONLY (correcto)
   Future<void> loadPayments() async {
     try {
       isLoading = true;
       notifyListeners();
 
-      payments = await _repo.getPayments();
+      final userId = SessionManager.instance.userId;
+
+      payments = userId == null ? [] : await _repo.getPaymentsByUser(userId);
     } catch (e) {
       debugPrint("Error loading payments: $e");
     } finally {
@@ -55,7 +59,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
     }
   }
 
-  // 🔹 VALIDACIÓN LOCAL (OK mantenerla)
+  //  VALIDACIÓN LOCAL (OK mantenerla)
   PaymentValidationResult _validatePayment(PaymentHistory payment) {
     if (_isDuplicate(payment)) {
       return PaymentValidationResult.duplicate;
@@ -84,15 +88,20 @@ class PaymentHistoryProvider extends ChangeNotifier {
     return list.first;
   }
 
-  // 🔹 LOCAL UPDATE
+  //  LOCAL UPDATE
   Future<void> updatePayment(PaymentHistory payment) async {
     await _repo.updateLocal(payment);
     await loadPayments();
   }
 
-  // 🔹 LOCAL DELETE
+  //  LOCAL DELETE
   Future<void> deletePayment(int id) async {
     await _repo.deleteLocal(id);
     await loadPayments();
+  }
+
+  void clear() {
+    payments = []; // en PaymentHistoryProvider: payments = [];
+    notifyListeners();
   }
 }

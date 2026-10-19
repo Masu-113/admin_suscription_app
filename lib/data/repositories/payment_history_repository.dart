@@ -161,4 +161,21 @@ class PaymentHistoryRepository {
 
     return PaymentHistory.fromMap(result.first);
   }
+
+  Future<List<PaymentHistory>> getPaymentsByUser(String userId) async {
+    final db = await dbHelper.database;
+
+    final result = await db.rawQuery(
+      '''
+    SELECT ph.*
+    FROM payment_history ph
+    INNER JOIN subscriptions s ON s.id = ph.subscription_id
+    WHERE s.user_id = ?
+    ORDER BY ph.payment_date DESC
+    ''',
+      [userId],
+    );
+
+    return result.map((map) => PaymentHistory.fromMap(map)).toList();
+  }
 }

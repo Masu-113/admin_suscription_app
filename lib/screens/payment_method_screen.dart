@@ -22,8 +22,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       final user = SessionManager.instance.currentUser;
-
       if (user != null) {
         context.read<PaymentMethodProvider>().loadUserMethods(user.id);
       }

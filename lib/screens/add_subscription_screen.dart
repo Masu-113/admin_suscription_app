@@ -74,6 +74,7 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
 
     if (userId != null) {
       Future.microtask(() {
+        if (!mounted) return;
         context.read<CategoryProvider>().loadUserCategories(userId);
         context.read<PaymentMethodProvider>().loadUserMethods(userId);
       });
