@@ -62,19 +62,11 @@ class PaymentMethodProvider extends ChangeNotifier {
   // ==========================
 
   Future<void> updateMethod(PaymentMethod method) async {
-    if (method.cloudId == null) {
-      throw Exception("No se puede actualizar un método sin cloudId");
-    }
-
     try {
       isLoading = true;
       notifyListeners();
 
-      await _repo.updatePaymentMethod(
-        cloudId: method.cloudId!,
-        type: method.type,
-        details: method.details,
-      );
+      await _repo.updatePaymentMethod(method);
 
       if (currentUserId != null) {
         await loadUserMethods(currentUserId!);

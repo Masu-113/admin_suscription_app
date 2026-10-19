@@ -42,18 +42,17 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     }
 
     if (editingMethod != null) {
-      // Actualizar método existente
       await context.read<PaymentMethodProvider>().updateMethod(
-        PaymentMethod(
-          id: editingMethod!.id, // Asegúrate de que tu modelo tenga un ID
+        editingMethod!.copyWith(
           type: typeController.text.trim(),
           details: detailController.text.trim(),
-          userId: user.id,
-          cloudId: editingMethod!.cloudId, // Mantener el cloudId
         ),
       );
+
+      if (!mounted) return;
+
       setState(() {
-        editingMethod = null; // Resetear después de actualizar
+        editingMethod = null;
       });
     } else {
       // Agregar nuevo método

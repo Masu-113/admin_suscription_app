@@ -61,26 +61,25 @@ class PaymentMethodRepository {
   // UPDATE
   // ==========================
 
-  Future<void> updatePaymentMethod({
-    required int cloudId,
-    required String type,
-    required String? details,
-  }) async {
-    // Actualizar en Supabase
-    await _supabase.updatePaymentMethod(
-      id: cloudId,
-      type: type,
-      details: details,
-    );
-
-    // Actualizar en SQLite
+  Future<void> updatePaymentMethod(PaymentMethod method) async {
     final db = await _dbHelper.database;
+
+    // 1. Siempre actualizar local por id
     await db.update(
       'payment_methods',
-      {'type': type, 'details': details},
-      where: 'cloud_id = ?',
-      whereArgs: [cloudId],
+      {'type': method.type, 'details': method.details},
+      where: 'id = ?',
+      whereArgs: [method.id],
     );
+
+    // 2. Sincronizar con Supabase solo si ya existe en la nube
+    if (method.cloudId != null) {
+      await _supabase.updatePaymentMethod(
+        id: method.cloudId!,
+        type: method.type,
+        details: method.details,
+      );
+    }
   }
 
   // ==========================

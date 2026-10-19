@@ -32,4 +32,20 @@ class PaymentMethod {
       userId: map['user_id'] as String?,
     );
   }
+
+  PaymentMethod copyWith({
+    int? id,
+    int? cloudId,
+    String? type,
+    String? details,
+    String? userId,
+  }) {
+    return PaymentMethod(
+      id: id ?? this.id,
+      cloudId: cloudId ?? this.cloudId,
+      type: type ?? this.type,
+      details: details ?? this.details,
+      userId: userId ?? this.userId,
+    );
+  }
 }
