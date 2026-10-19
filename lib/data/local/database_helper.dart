@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   DatabaseHelper._();
@@ -96,10 +97,18 @@ class DatabaseHelper {
           )
         ''');
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < newVersion) {
+          // Aquí puedes manejar las migraciones de la base de datos
+          // según la versión antigua y la nueva.
+        }
+      },
     );
   }
 
   Future<void> deleteDatabaseFile() async {
+    if (!kDebugMode) return;
+
     final path = join(await getDatabasesPath(), 'subscriptions.db');
     await deleteDatabase(path);
     _database = null;
