@@ -6,11 +6,18 @@ class SubscriptionStatusHelper {
   static SubscriptionStatus getStatus(DateTime coveredUntil) {
     final now = DateTime.now();
 
-    if (now.isAfter(coveredUntil)) {
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final endDate = DateTime.utc(
+      coveredUntil.year,
+      coveredUntil.month,
+      coveredUntil.day,
+    );
+
+    if (today.isAfter(endDate)) {
       return SubscriptionStatus.expired;
     }
 
-    final daysLeft = coveredUntil.difference(now).inDays;
+    final daysLeft = endDate.difference(today).inDays;
 
     if (daysLeft <= 3) {
       return SubscriptionStatus.aboutToExpire;

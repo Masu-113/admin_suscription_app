@@ -22,19 +22,7 @@ class AddSubscriptionScreen extends StatefulWidget {
 }
 
 DateTime _calculateInitialCoverage(Subscription sub) {
-  if (sub.billingCycle == BillingCycle.monthly) {
-    return DateTime(
-      sub.startDate.year,
-      sub.startDate.month + 1,
-      sub.startDate.day,
-    );
-  } else {
-    return DateTime(
-      sub.startDate.year + 1,
-      sub.startDate.month,
-      sub.startDate.day,
-    );
-  }
+  return sub.billingCycle.nextDate(sub.startDate);
 }
 
 class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {

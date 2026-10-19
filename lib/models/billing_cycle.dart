@@ -20,6 +20,13 @@ extension BillingCycleExtension on BillingCycle {
   }
 
   DateTime nextDate(DateTime from) {
-    return DateTime(from.year, from.month + months, from.day);
+    final totalMonths = from.month - 1 + months;
+    final year = from.year + totalMonths ~/ 12;
+    final month = totalMonths % 12 + 1;
+
+    final lastDayOfMonth = DateTime(year, month + 1, 0).day;
+    final day = from.day > lastDayOfMonth ? lastDayOfMonth : from.day;
+
+    return DateTime(year, month, day);
   }
 }

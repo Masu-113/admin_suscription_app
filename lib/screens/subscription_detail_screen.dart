@@ -63,11 +63,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     final subscription = widget.data.subscription;
     final base = _getLastCoveredUntil(payments);
 
-    if (subscription.billingCycle == BillingCycle.monthly) {
-      return DateTime(base.year, base.month + 1, base.day);
-    } else {
-      return DateTime(base.year + 1, base.month, base.day);
-    }
+    return subscription.billingCycle.nextDate(base);
   }
 
   Future<void> _addPayment(List<PaymentHistory> payments) async {
