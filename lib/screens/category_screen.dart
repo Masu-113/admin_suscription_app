@@ -44,16 +44,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
 
     if (editingCategory != null) {
-      // Actualizar categoría existente
       await context.read<CategoryProvider>().updateCategory(
-        Category(
-          name: name,
-          userId: editingCategory!.userId,
-          cloudId: editingCategory!.cloudId, // Mantener el cloudId existente
-        ),
+        editingCategory!.copyWith(name: name),
       );
+
+      if (!mounted) return;
+
       setState(() {
-        editingCategory = null; // Resetear al finalizar
+        editingCategory = null;
       });
     } else {
       // Agregar nueva categoría

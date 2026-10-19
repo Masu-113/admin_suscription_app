@@ -63,16 +63,23 @@ class CategoryRepository {
   // UPDATE
   // ==========================
 
-  Future<void> updateCategory({
-    required int cloudId,
-    required String name,
-  }) async {
-    await _supabase.updateCategory(id: cloudId, name: name);
+  Future<void> updateCategory(Category category) async {
+    final db = await _dbHelper.database;
 
-    final category = await getCategoryByCloudId(cloudId);
-    if (category != null) {
-      final updatedCategory = category.copyWith(name: name);
-      await updateLocal(updatedCategory);
+    // 1. Siempre actualizar local por id
+    await db.update(
+      'categories',
+      {'name': category.name},
+      where: 'id = ?',
+      whereArgs: [category.id],
+    );
+
+    // 2. Solo sincronizar con Supabase si ya existe en la nube
+    if (category.cloudId != null) {
+      await _supabase.updateCategory(
+        id: category.cloudId!,
+        name: category.name,
+      );
     }
   }
 

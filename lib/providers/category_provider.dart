@@ -48,10 +48,7 @@ class CategoryProvider extends ChangeNotifier {
     try {
       isLoading = true;
       notifyListeners();
-      await _repo.updateCategory(
-        cloudId: category.cloudId ?? 0,
-        name: category.name,
-      );
+      await _repo.updateCategory(category);
       if (currentUserId != null) {
         await loadUserCategories(currentUserId!);
       }
