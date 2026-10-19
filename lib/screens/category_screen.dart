@@ -35,32 +35,36 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (name.isEmpty) return;
 
     final user = SessionManager.instance.currentUser;
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<CategoryProvider>();
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text("No hay un usuario autenticado")),
       );
       return;
     }
 
+    final bool ok;
+
     if (editingCategory != null) {
-      await context.read<CategoryProvider>().updateCategory(
-        editingCategory!.copyWith(name: name),
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        editingCategory = null;
-      });
+      ok = await provider.updateCategory(editingCategory!.copyWith(name: name));
     } else {
-      // Agregar nueva categoría
-      await context.read<CategoryProvider>().addCategory(
-        Category(name: name, userId: user.id),
-      );
+      ok = await provider.addCategory(Category(name: name, userId: user.id));
     }
 
+    if (!mounted) return;
+
+    setState(() {
+      editingCategory = null;
+    });
     controller.clear();
+
+    if (!ok) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(provider.errorMessage ?? "Ocurrió un error")),
+      );
+    }
   }
 
   void editCategory(Category category) {
@@ -71,7 +75,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Future<void> deleteCategory(Category category) async {
-    await context.read<CategoryProvider>().deleteCategory(category);
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<CategoryProvider>();
+
+    final ok = await provider.deleteCategory(category);
+
+    if (!mounted || ok) return;
+
+    messenger.showSnackBar(
+      SnackBar(content: Text(provider.errorMessage ?? "Ocurrió un error")),
+    );
   }
 
   @override

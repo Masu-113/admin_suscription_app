@@ -11,6 +11,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
 
   List<PaymentHistory> payments = [];
   bool isLoading = false;
+  String? errorMessage;
 
   //  LOAD LOCAL ONLY (correcto)
   Future<void> loadPayments() async {
@@ -29,11 +30,13 @@ class PaymentHistoryProvider extends ChangeNotifier {
     }
   }
 
-  // INSERT (SOLO LOCAL AQUÍ)
   Future<bool> addPayment(PaymentHistory payment) async {
+    errorMessage = null;
+
     final result = _validatePayment(payment);
 
     if (result == PaymentValidationResult.duplicate) {
+      errorMessage = "Ya existe un pago registrado en esa fecha.";
       return false;
     }
 
@@ -55,6 +58,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint("Error adding payment: $e");
+      errorMessage = "No se pudo registrar el pago. Revisa tu conexión.";
       return false;
     }
   }

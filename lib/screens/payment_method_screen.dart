@@ -41,32 +41,37 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<PaymentMethodProvider>();
+
+    final type = typeController.text.trim();
+    final details = detailController.text.trim();
+
+    final bool ok;
+
     if (editingMethod != null) {
-      await context.read<PaymentMethodProvider>().updateMethod(
-        editingMethod!.copyWith(
-          type: typeController.text.trim(),
-          details: detailController.text.trim(),
-        ),
+      ok = await provider.updateMethod(
+        editingMethod!.copyWith(type: type, details: details),
       );
-
-      if (!mounted) return;
-
-      setState(() {
-        editingMethod = null;
-      });
     } else {
-      // Agregar nuevo método
-      await context.read<PaymentMethodProvider>().addMethod(
-        PaymentMethod(
-          type: typeController.text.trim(),
-          details: detailController.text.trim(),
-          userId: user.id,
-        ),
+      ok = await provider.addMethod(
+        PaymentMethod(type: type, details: details, userId: user.id),
       );
     }
 
+    if (!mounted) return;
+
+    setState(() {
+      editingMethod = null;
+    });
     typeController.clear();
     detailController.clear();
+
+    if (!ok) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(provider.errorMessage ?? "Ocurrió un error")),
+      );
+    }
   }
 
   void editMethod(PaymentMethod method) {
@@ -78,7 +83,16 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   Future<void> deleteMethod(PaymentMethod method) async {
-    await context.read<PaymentMethodProvider>().deleteMethod(method);
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<PaymentMethodProvider>();
+
+    final ok = await provider.deleteMethod(method);
+
+    if (!mounted || ok) return;
+
+    messenger.showSnackBar(
+      SnackBar(content: Text(provider.errorMessage ?? "Ocurrió un error")),
+    );
   }
 
   @override

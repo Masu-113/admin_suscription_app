@@ -115,17 +115,17 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     );
 
     try {
-      // ✔ AQUÍ YA SE USA EL PAYMENT (FIX DEL ERROR 1)
-      final success = await context.read<PaymentHistoryProvider>().addPayment(
-        payment,
-      );
+      final provider = context.read<PaymentHistoryProvider>();
+      final success = await provider.addPayment(payment);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success ? "Pago registrado con éxito" : "Pago duplicado",
+            success
+                ? "Pago registrado con éxito"
+                : (provider.errorMessage ?? "Error al registrar pago"),
           ),
         ),
       );

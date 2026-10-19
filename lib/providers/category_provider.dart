@@ -6,6 +6,7 @@ class CategoryProvider extends ChangeNotifier {
   final CategoryRepository _repo = CategoryRepository();
   List<Category> categories = [];
   bool isLoading = false;
+  String? errorMessage;
   String? currentUserId;
 
   // LOAD USER CATEGORIES
@@ -26,55 +27,48 @@ class CategoryProvider extends ChangeNotifier {
 
   // ADD CATEGORY
 
-  Future<void> addCategory(Category category) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-      await _repo.insertCategory(category);
-      if (currentUserId != null) {
-        await loadUserCategories(currentUserId!);
-      }
-    } catch (e) {
-      debugPrint("Error adding category: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+  Future<bool> addCategory(Category category) async {
+    return _run(
+      () => _repo.insertCategory(category),
+      "Se guardó en este dispositivo, pero no se pudo sincronizar con la nube.",
+    );
   }
 
-  // UPDATE CATEGORY
-
-  Future<void> updateCategory(Category category) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-      await _repo.updateCategory(category);
-      if (currentUserId != null) {
-        await loadUserCategories(currentUserId!);
-      }
-    } catch (e) {
-      debugPrint("Error updating category: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+  Future<bool> updateCategory(Category category) async {
+    return _run(
+      () => _repo.updateCategory(category),
+      "Se actualizó en este dispositivo, pero no se pudo sincronizar con la nube.",
+    );
   }
 
-  // DELETE CATEGORY
+  Future<bool> deleteCategory(Category category) async {
+    return _run(
+      () => _repo.deleteCategory(category),
+      "Se eliminó en este dispositivo, pero no se pudo sincronizar con la nube.",
+    );
+  }
 
-  Future<void> deleteCategory(Category category) async {
+  Future<bool> _run(Future<void> Function() action, String failMessage) async {
+    errorMessage = null;
+    var ok = true;
+
     try {
       isLoading = true;
       notifyListeners();
-      await _repo.deleteCategory(category);
-      if (currentUserId != null) {
-        await loadUserCategories(currentUserId!);
-      }
+      await action();
     } catch (e) {
-      debugPrint("Error deleting category: $e");
-    } finally {
+      ok = false;
+      errorMessage = failMessage;
+      debugPrint("Error en CategoryProvider: $e");
+    }
+
+    if (currentUserId != null) {
+      await loadUserCategories(currentUserId!);
+    } else {
       isLoading = false;
       notifyListeners();
     }
+
+    return ok;
   }
 }
