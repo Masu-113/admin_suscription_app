@@ -45,10 +45,16 @@ class CancelledSubscriptionScreen extends StatelessWidget {
       return;
     }
 
-    await provider.restoreSubscription(id);
+    final ok = await provider.restoreSubscription(id);
 
     messenger.showSnackBar(
-      const SnackBar(content: Text("Suscripción reactivada correctamente.")),
+      SnackBar(
+        content: Text(
+          ok
+              ? "Suscripción reactivada correctamente."
+              : (provider.errorMessage ?? "Ocurrió un error"),
+        ),
+      ),
     );
   }
 

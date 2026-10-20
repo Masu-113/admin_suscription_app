@@ -142,14 +142,21 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    await context.read<SubscriptionProvider>().cancelSubscription(id);
+    final provider = context.read<SubscriptionProvider>();
+    final messenger = ScaffoldMessenger.of(context);
 
-    if (!mounted) {
-      return;
-    }
+    final ok = await provider.cancelSubscription(id);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Suscripción cancelada correctamente.")),
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? "Suscripción cancelada correctamente."
+              : (provider.errorMessage ?? "Ocurrió un error"),
+        ),
+      ),
     );
   }
 

@@ -60,11 +60,16 @@ class SessionManager extends ChangeNotifier {
       final email = supabaseUser.email!;
 
       // Sincronizar usuario con Supabase
-      await _supabaseRepository.upsertUser(
-        id: userId,
-        name: name,
-        email: email,
-      );
+      // Sincronizar usuario con Supabase (no bloquea si no hay internet)
+      try {
+        await _supabaseRepository.upsertUser(
+          id: userId,
+          name: name,
+          email: email,
+        );
+      } catch (e) {
+        debugPrint("Sin conexión para sincronizar usuario: $e");
+      }
 
       // Sincronizar usuario con SQLite
       UserModel? localUser = await _userRepository.getUserById(userId);
@@ -82,13 +87,12 @@ class SessionManager extends ChangeNotifier {
       }
 
       _currentUser = localUser;
-      // Sincronizar datos entre SQLite y Supabase
-      await SyncService.instance.syncAll(userId);
-      if (kDebugMode) {
-        debugPrint(
-          "Sincronización completa para el usuario: ${_currentUser?.email}",
-        );
+      try {
+        await SyncService.instance.syncAll(userId);
+      } catch (e) {
+        debugPrint("Sin conexión: se usan los datos locales. $e");
       }
+
       debugPrint("Usuario actual: ${_currentUser?.email}");
       debugPrint("UUID actual: ${_currentUser?.id}");
     } catch (e, s) {

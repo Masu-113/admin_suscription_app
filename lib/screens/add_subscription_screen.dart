@@ -154,20 +154,39 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
     );
 
     final subscriptionProvider = context.read<SubscriptionProvider>();
+    final paymentProvider = context.read<PaymentHistoryProvider>();
+    final messenger = ScaffoldMessenger.of(context);
 
-    // EDITAR
     if (isEditing) {
-      await subscriptionProvider.updateSubscription(subscription);
-    }
-    // CREAR
-    else {
+      final ok = await subscriptionProvider.updateSubscription(subscription);
+      if (!ok) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              subscriptionProvider.errorMessage ?? "Ocurrió un error",
+            ),
+          ),
+        );
+      }
+    } else {
       final id = await subscriptionProvider.addSubscription(subscription);
-      if (!mounted) return;
-      // Preguntar primer pago
-      final registerPayment = await showDialog<bool>(
-        // ignore: use_build_context_synchronously
-        context: context,
 
+      if (id == null) {
+        // No se guardó nada: se queda en el formulario para reintentar
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              subscriptionProvider.errorMessage ?? "Ocurrió un error",
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+
+      final registerPayment = await showDialog<bool>(
+        context: context,
         builder: (_) {
           return AlertDialog(
             title: const Text("Registrar primer pago"),
@@ -198,23 +217,38 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
       );
 
       if (registerPayment == true) {
-        // ignore: use_build_context_synchronously
-        await context.read<PaymentHistoryProvider>().addPayment(
+        final ok = await paymentProvider.addPayment(
           PaymentHistory(
             paymentDate: subscription.startDate,
-
             amount: subscription.cost,
-
             subscriptionId: id,
-
             coveredUntil: _calculateInitialCoverage(subscription),
           ),
         );
-      }
-    }
 
-    if (mounted) {
-      Navigator.pop(context);
+        if (!mounted) return;
+
+        if (!ok) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                paymentProvider.errorMessage ?? "No se pudo registrar el pago",
+              ),
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            const SnackBar(content: Text("Pago registrado correctamente")),
+          );
+          Navigator.pop(
+            context,
+          ); // Cerrar el formulario después de registrar el pago // Cerrar el formulario después de registrar el pago
+        }
+      } else {
+        Navigator.pop(
+          context,
+        ); // Cerrar el formulario si no se registra el pago
+      }
     }
   }
 

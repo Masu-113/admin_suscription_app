@@ -9,9 +9,8 @@ class SubscriptionProvider extends ChangeNotifier {
   final SubscriptionRepository _repo = SubscriptionRepository();
 
   List<SubscriptionFull> subscriptions = [];
-
   bool isLoading = false;
-
+  String? errorMessage;
   String? currentUserId;
 
   // ==========================
@@ -49,75 +48,56 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
-  // ==========================
-  // AGREGAR
-  // ==========================
-
-  Future<int> addSubscription(Subscription sub) async {
+  Future<int?> addSubscription(Subscription sub) async {
+    errorMessage = null;
     try {
       final id = await _repo.insertSubscription(sub);
-
-      if (currentUserId != null) {
-        await loadUserSubscriptions(currentUserId!);
-      } else {
-        await loadSubscriptions();
-      }
-
+      await _reload();
       return id;
     } catch (e) {
       debugPrint("Error adding subscription: $e");
-      rethrow;
+      errorMessage = "No se pudo guardar la suscripción. Revisa tu conexión.";
+      return null;
     }
   }
 
-  // ==========================
-  // CANCELAR
-  // ==========================
+  Future<bool> cancelSubscription(int id) => _runAction(
+    () => _repo.cancelSubscription(id),
+    "Se canceló en este dispositivo, pero no se pudo sincronizar con la nube.",
+  );
 
-  Future<void> cancelSubscription(int id) async {
+  Future<bool> restoreSubscription(int id) => _runAction(
+    () => _repo.restoreSubscription(id),
+    "Se reactivó en este dispositivo, pero no se pudo sincronizar con la nube.",
+  );
+
+  Future<bool> updateSubscription(Subscription sub) => _runAction(
+    () => _repo.updateSubscription(sub),
+    "Se actualizó en este dispositivo, pero no se pudo sincronizar con la nube.",
+  );
+
+  Future<bool> _runAction(
+    Future<void> Function() action,
+    String failMessage,
+  ) async {
+    errorMessage = null;
+    var ok = true;
     try {
-      await _repo.cancelSubscription(id);
-
-      if (currentUserId != null) {
-        await loadUserSubscriptions(currentUserId!);
-      }
+      await action();
     } catch (e) {
-      debugPrint("Error cancelling subscription: $e");
-      rethrow;
+      ok = false;
+      errorMessage = failMessage;
+      debugPrint("Error en SubscriptionProvider: $e");
     }
+    await _reload(); // el cambio local ya se hizo, siempre recargar
+    return ok;
   }
 
-  // ==========================
-  // REACTIVAR
-  // ==========================
-
-  Future<void> restoreSubscription(int id) async {
-    try {
-      await _repo.restoreSubscription(id);
-
-      if (currentUserId != null) {
-        await loadUserSubscriptions(currentUserId!);
-      }
-    } catch (e) {
-      debugPrint("Error restoring subscription: $e");
-      rethrow;
-    }
-  }
-
-  // ==========================
-  // ACTUALIZAR
-  // ==========================
-
-  Future<void> updateSubscription(Subscription sub) async {
-    try {
-      await _repo.updateSubscription(sub);
-
-      if (currentUserId != null) {
-        await loadUserSubscriptions(currentUserId!);
-      }
-    } catch (e) {
-      debugPrint("Error updating subscription: $e");
-      rethrow;
+  Future<void> _reload() async {
+    if (currentUserId != null) {
+      await loadUserSubscriptions(currentUserId!);
+    } else {
+      await loadSubscriptions();
     }
   }
 
