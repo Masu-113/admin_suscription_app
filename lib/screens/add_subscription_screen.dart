@@ -245,10 +245,17 @@ class _AddSubscriptionScreenState extends State<AddSubscriptionScreen> {
           ); // Cerrar el formulario después de registrar el pago // Cerrar el formulario después de registrar el pago
         }
       } else {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Suscripción guardada sin registrar pago"),
+          ),
+        );
         Navigator.pop(
           context,
-        ); // Cerrar el formulario si no se registra el pago
+        ); // Cerrar el formulario después de guardar la suscripción
       }
+      // Cerrar el formulario después de guardar la suscripción
     }
   }
 

@@ -181,11 +181,17 @@ class PaymentHistoryRepository {
 
   Future<List<PaymentHistory>> getPendingByUser(String userId) async {
     final db = await dbHelper.database;
-    final result = await db.query(
-      'payment_history',
-      where: 'userId = ? AND cloud_id IS NULL',
-      whereArgs: [userId],
+
+    final result = await db.rawQuery(
+      '''
+    SELECT ph.*
+    FROM payment_history ph
+    INNER JOIN subscriptions s ON s.id = ph.subscription_id
+    WHERE s.user_id = ? AND ph.cloud_id IS NULL
+    ''',
+      [userId],
     );
+
     return result.map((e) => PaymentHistory.fromMap(e)).toList();
   }
 
