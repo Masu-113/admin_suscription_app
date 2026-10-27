@@ -178,4 +178,24 @@ class PaymentHistoryRepository {
 
     return result.map((map) => PaymentHistory.fromMap(map)).toList();
   }
+
+  Future<List<PaymentHistory>> getPendingByUser(String userId) async {
+    final db = await dbHelper.database;
+    final result = await db.query(
+      'payment_history',
+      where: 'userId = ? AND cloud_id IS NULL',
+      whereArgs: [userId],
+    );
+    return result.map((e) => PaymentHistory.fromMap(e)).toList();
+  }
+
+  Future<void> setCloudId(int localId, int cloudId) async {
+    final db = await dbHelper.database;
+    await db.update(
+      'payment_history',
+      {'cloud_id': cloudId},
+      where: 'id = ?',
+      whereArgs: [localId],
+    );
+  }
 }

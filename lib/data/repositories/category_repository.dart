@@ -164,4 +164,24 @@ class CategoryRepository {
       whereArgs: [category.id],
     );
   }
+
+  Future<List<Category>> getPendingByUser(String userId) async {
+    final db = await _dbHelper.database;
+    final result = await db.query(
+      'categories',
+      where: 'user_id = ? AND cloud_id IS NULL',
+      whereArgs: [userId],
+    );
+    return result.map((e) => Category.fromMap(e)).toList();
+  }
+
+  Future<void> setCloudId(int localId, int cloudId) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'categories',
+      {'cloud_id': cloudId},
+      where: 'id = ?',
+      whereArgs: [localId],
+    );
+  }
 }

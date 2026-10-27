@@ -164,4 +164,24 @@ class PaymentMethodRepository {
       whereArgs: [method.id],
     );
   }
+
+  Future<List<PaymentMethod>> getPendingByUser(String userId) async {
+    final db = await _dbHelper.database;
+    final result = await db.query(
+      'payment_methods',
+      where: 'user_id = ? AND cloud_id IS NULL',
+      whereArgs: [userId],
+    );
+    return result.map((e) => PaymentMethod.fromMap(e)).toList();
+  }
+
+  Future<void> setCloudId(int localId, int cloudId) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'payment_methods',
+      {'cloud_id': cloudId},
+      where: 'id = ?',
+      whereArgs: [localId],
+    );
+  }
 }

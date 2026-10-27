@@ -365,4 +365,24 @@ class SubscriptionRepository {
 
     return Subscription.fromMap(result.first);
   }
+
+  Future<List<Subscription>> getPendingByUser(String userId) async {
+    final db = await dbHelper.database;
+    final result = await db.query(
+      'subscriptions',
+      where: 'user_id = ? AND cloud_id IS NULL',
+      whereArgs: [userId],
+    );
+    return result.map((e) => Subscription.fromMap(e)).toList();
+  }
+
+  Future<void> setCloudId(int localId, int cloudId) async {
+    final db = await dbHelper.database;
+    await db.update(
+      'subscriptions',
+      {'cloud_id': cloudId},
+      where: 'id = ?',
+      whereArgs: [localId],
+    );
+  }
 }
